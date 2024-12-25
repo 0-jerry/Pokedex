@@ -7,9 +7,11 @@
 
 import Foundation
 
-//import
 import RxSwift
 
+/// Network 통신을 담당하는 싱글톤 매니저
+///
+/// **fetch<T: Decodable>(url: URL)** : 데이터를 요청하고 Decodable 이벤트를 생성하는 Single 을 반환합니다.
 final class NetworkManager {
     
     static let shared = NetworkManager()
@@ -18,24 +20,55 @@ final class NetworkManager {
     
 }
 
-// MARK: - URL 반환 메서드
-
 extension NetworkManager {
     
-    // 데이터 요청 메서드
+    /// 지정된 URL 로 GET 요청을 수행하여 Decodable 타입의 데이터를 반환
+    ///
+    /// - Parameter url: 요청 URL
+    /// - Returns: Decodable 타입으로 디코딩된 응답 데이터를 담은 Single<T> 객체
     func fetch<T: Decodable>(url: URL) -> Single<T> {
-        let single = Single<T>.create(subscribe: { observer -> Disposable in
+        
+        // 컴플리션을 통해 응답에 대한 observer를 실행시키는 Single 객체
+        let single = Single<T>.create(subscribe: { observer in
             let request = URLRequest(url: url)
             URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
                 
-                guard let self,
-                      validResponse(response),
-                      checkError(error) else { return }
+                // 앱이 꺼져 NetworkManager 가 메모리에서 해제된 경우
+                guard let self else {
+                    observer(.failure(NetworkManagerError.unknown))
+                    return
+                }
                 
+                // error 를 응답받은 경우
+                if let error {
+                    observer(.failure(error))
+                    return
+                }
+                
+                // HTTP 가 아닌 응답 경우
+                guard let response = response as? HTTPURLResponse else {
+                    observer(.failure(NetworkManagerError.invalidResponse(statusCode: nil)))
+                    return
+                }
+                
+                // 요청이 실패한 경우
+                let statusCode = response.statusCode
+                guard (200..<300).contains(statusCode) else {
+                    let networkManagerError = NetworkManagerError.invalidResponse(statusCode: statusCode)
+                    observer(.failure(networkManagerError))
+                    return
+                }
+                
+                // data 디코딩에 실패한 경우
                 guard let data,
-                      let decodable = try? JSONDecoder().decode(T.self,from: data) else { return }
+                      let decodable = try? JSONDecoder().decode(T.self,from: data) else {
+                    observer(.failure(NetworkManagerError.decodeFailed))
+                    return
+                }
                 
+                // 정상적인 데이터 반환
                 observer(.success(decodable))
+                
             }.resume()
             
             return Disposables.create()
@@ -43,21 +76,11 @@ extension NetworkManager {
         
         return single
     }
-    
-    // 응답 검증
-    private func validResponse(_ response: URLResponse?) -> Bool {
-        guard let response = response as? HTTPURLResponse,
-              (200..<300).contains(response.statusCode) else { return false }
         
-        return true
-    }
-    
-    // 에러 검증
-    private func checkError(_ error: (any Error)?) -> Bool {
-        guard error == nil else { return false }
-        
-        return true
-    }
-    
 }
 
+enum NetworkManagerError: Error {
+    case invalidResponse(statusCode: Int?)
+    case decodeFailed
+    case unknown
+}
