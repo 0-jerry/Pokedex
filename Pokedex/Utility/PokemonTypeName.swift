@@ -5,6 +5,8 @@
 //  Created by t2023-m0072 on 12/23/24.
 //
 
+import Foundation
+
 enum PokemonTypeName: String, CaseIterable, Codable {
     case normal
     case fire

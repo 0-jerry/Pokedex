@@ -7,7 +7,6 @@
 
 import Foundation
 
-
 /// Poke URL Formatter
 ///
 struct PokeFormatter {
@@ -25,6 +24,11 @@ struct PokeFormatter {
         
         return pokeDetailURL
     }
+    
+    /// PokemonList URL
+    static func list(limit: Int, offset: Int) -> URL? {
+        guard let listURL = URL(string: "https://pokeapi.co/api/v2/pokemon?limit=\(limit)&offset=\(offset)") else { return nil }
+        
+        return listURL
+    }
 }
-
-
