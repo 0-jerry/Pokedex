@@ -9,7 +9,19 @@ import Foundation
 
 
 // 포켓몬 리스트 데이터 형식
-struct PokemonList: Decodable {
+struct PokemonList: Decodable, CustomStringConvertible {
+    var description: String {
+        //        guard let previous,
+        //              let next else { return "[PokemonList]"}
+        return """
+        [PokemonList]
+        previous: \(String(describing: previous))
+        next: \(next ?? "nil")
+        
+        \(pokemons.map { $0.description }.joined(separator: "\n\n"))
+        """
+    }
+    
     private let previous: String?
     private let next: String?
     let pokemons: [Pokemon]
@@ -26,9 +38,27 @@ struct PokemonList: Decodable {
 }
 
 // 포켓몬 간단한 데이터 형식
-struct Pokemon: Decodable {
+struct Pokemon: Decodable, CustomStringConvertible {
+    
+    var description: String {
+        guard let name,
+              let url else { return "pokemon"}
+        return """
+        name: \(name)
+        url: \(url)
+        """
+    }
+    
     let name: String?
     let url: String?
+    
+    lazy var id: Int? = {
+        guard let url else { return 1 }
+        var components = url.components(separatedBy: "/")
+        let number = components[components.count - 2]
+        guard let id = Int(number) else { return 1 }
+        return id
+    }()
     
     private(set) lazy var detailsURL: URL? = URL(from: url)
 }

@@ -34,7 +34,7 @@ extension NetworkManager {
             URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
                 
                 // 앱이 꺼져 NetworkManager 가 메모리에서 해제된 경우
-                guard let self else {
+                guard self != nil else {
                     observer(.failure(NetworkManagerError.unknown))
                     return
                 }

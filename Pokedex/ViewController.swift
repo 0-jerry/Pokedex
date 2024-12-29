@@ -6,16 +6,76 @@
 //
 
 import UIKit
+import SnapKit
+import RxSwift
 
 class ViewController: UIViewController {
+    
+    private let pokemonAPIManager = PokemonAPIManager.shared
+    private var poketmonList: PokemonList?
+    private let disposeBag = DisposeBag()
+    private var mainView: MainView?
+    
+    override func loadView() {
+        super.loadView()
+        let mainView = MainView(frame: view.frame)
+        self.mainView = mainView
+        view = mainView
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.navigationController?.navigationBar.isHidden = true
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
-        view.backgroundColor = .red
         
+        mainView?.collectionView.dataSource = self
+        updatePokemons()
     }
-
-
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        self.navigationController?.navigationBar.isHidden = true
+    }
+    
+    private func updatePokemons() {
+        pokemonAPIManager.fetchPokemonList(limit: 100, offset: 0)?
+            .subscribe(onSuccess: { [weak self] pokemonList in
+                guard let self,
+                      let mainView = self.mainView else { return }
+                
+                self.poketmonList = pokemonList
+                
+                DispatchQueue.main.async {
+                    mainView.reload()
+                }
+            }).disposed(by: disposeBag)
+    }
+    
 }
 
+extension ViewController: UICollectionViewDataSource {
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        poketmonList?.pokemons.count ?? 0
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PokeCollectionViewCell.id, for: indexPath) as? PokeCollectionViewCell else { return PokeCollectionViewCell() }
+        guard var poketmon = poketmonList?.pokemons[indexPath.item],
+              let id = poketmon.id else { return PokeCollectionViewCell() }
+        
+        cell.configurePokeID(id)
+        
+        return cell
+    }
+    
+    
+}
+
+
+#Preview {
+    ViewController()
+}
