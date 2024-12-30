@@ -9,18 +9,19 @@ import Foundation
 
 // 포켓몬 타입
 struct PokemonType: Decodable {
+    let type: NamedAPIResource?
+    var english: String? { type?.name }
     
-    let english: String?
-    
-    private(set) lazy var korean: String? = {
+    var korean: String {
         guard let english,
-              let pokemonTypeName = PokemonTypeName(rawValue: english) else { return nil }
+              let pokemonTypeName = PokemonTypeName(rawValue: english) else { return english ?? "none" }
         
         return pokemonTypeName.displayName
-    }()
-    
-    enum CodingKeys: String, CodingKey {
-        case english = "type"
     }
     
+}
+
+struct NamedAPIResource: Decodable {
+    let name: String
+    let url: String
 }

@@ -7,10 +7,11 @@
 
 import Foundation
 import RxSwift
-import Kingfisher
 import UIKit
 
-class PokemonAPIManager {
+/// Singleton 객체 
+///
+final class PokemonAPIManager: MainViewModel, DetailViewModel {
     
     static let shared = PokemonAPIManager()
     
@@ -30,7 +31,10 @@ class PokemonAPIManager {
     
     func fetchPokemonImage(of id: Int) -> Single<Data>? {
         guard let url = PokeFormatter.image(of: id) else { return nil }
-        return networkManager.fetchImage(url: url)
+        return networkManager.fetchData(url: url)
     }
     
 }
+
+
+

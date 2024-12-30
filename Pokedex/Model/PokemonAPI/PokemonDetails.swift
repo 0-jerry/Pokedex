@@ -16,12 +16,5 @@ struct PokemonDetails: Decodable {
     let weight: Int?
     let types: [PokemonType]?
     
-    private(set) lazy var koreanName: String? = {
-        guard let name,
-              let koreanName = PokemonTranslator.getKoreanName(for: name) else { return nil }
-        
-        return koreanName
-    }()
-    
 }
 

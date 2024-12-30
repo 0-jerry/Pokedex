@@ -23,9 +23,9 @@ struct PokemonList: Decodable, CustomStringConvertible {
     private let next: String?
     let pokemons: [Pokemon]
     
-    private(set) lazy var nextURL: URL? = URL(from: next)
+    var nextURL: URL? { URL(from: next) }
     
-    private(set) lazy var previousURL: URL? = URL(from: previous)
+    var previousURL: URL? { URL(from: previous) }
     
     enum CodingKeys: String, CodingKey {
         case pokemons = "results"

@@ -23,13 +23,13 @@ struct Pokemon: Decodable, CustomStringConvertible {
     let url: String?
     
     // FIXME: - 적합한 형태는 아닌 것 같다.
-    lazy var id: Int? = {
+    var id: Int? {
         guard let url else { return 1 }
-        var components = url.components(separatedBy: "/")
+        let components = url.components(separatedBy: "/")
         let number = components[components.count - 2]
         guard let id = Int(number) else { return 1 }
         return id
-    }()
+    }
     
-    private(set) lazy var detailsURL: URL? = URL(from: url)
+    var detailsURL: URL? { URL(from: url) }
 }

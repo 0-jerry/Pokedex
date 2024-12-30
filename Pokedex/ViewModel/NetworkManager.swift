@@ -18,6 +18,7 @@ final class NetworkManager {
     private init() {}
     
     private var cache = [URL: Any]()
+    
 }
 
 extension NetworkManager {
@@ -28,11 +29,7 @@ extension NetworkManager {
     /// - Returns: Decodable 타입으로 디코딩된 응답 데이터를 담은 Single<T> 객체
     func fetch<T: Decodable>(url: URL) -> Single<T> {
         
-        if let decodable = self.cache[url] as? T {
-            let single = Single<T>.create(subscribe: { obserser in
-                obserser(.success(decodable))
-                return Disposables.create()
-            })
+        if let single: Single<T> = cacheData(url: url) {
             return single
         }
         
@@ -85,13 +82,13 @@ extension NetworkManager {
         return single
     }
     
-    func fetchImage(url: URL) -> Single<Data> {
+    /// 지정된 URL 로 GET 요청을 수행하여 Data 타입의 데이터를 반환
+    ///
+    /// - Parameter url: 요청 URL
+    /// - Returns: Data 타입으로 응답 데이터를 담은 Single<Data> 객체
+    func fetchData(url: URL) -> Single<Data> {
         
-        if let data = self.cache[url] as? Data {
-            let single = Single<Data>.create(subscribe: { obserser in
-                obserser(.success(data))
-                return Disposables.create()
-            })
+        if let single: Single<Data> = cacheData(url: url) {
             return single
         }
         
@@ -99,7 +96,7 @@ extension NetworkManager {
         let single = Single<Data>.create(subscribe: { observer in
             let request = URLRequest(url: url)
             URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-                guard self != nil else {
+                guard let self else {
                     observer(.failure(NetworkManagerError.unknown))
                     return }
                 
@@ -108,23 +105,46 @@ extension NetworkManager {
                     return
                 }
                 
-                guard let data,
-                      let response = response as? HTTPURLResponse else {
+
+                // HTTP 가 아닌 응답 경우
+                guard let response = response as? HTTPURLResponse else {
                     observer(.failure(NetworkManagerError.invalidResponse(statusCode: nil)))
                     return
                 }
                 
-                guard (200..<300).contains(response.statusCode) else {
-                    observer(.failure(NetworkManagerError.invalidResponse(statusCode: response.statusCode)))
+                // 요청이 실패한 경우
+                let statusCode = response.statusCode
+                guard (200..<300).contains(statusCode) else {
+                    let networkManagerError = NetworkManagerError.invalidResponse(statusCode: statusCode)
+                    observer(.failure(networkManagerError))
                     return
                 }
+                
+                guard let data else {
+                    observer(.failure(NetworkManagerError.unknown))
+                    return }
+                
                 observer(.success(data))
+                self.cache[url] = data
             }.resume()
+            
             return Disposables.create()
         })
         return single
     }
+    
+    // 캐시 데이터가 존재할 경우, Single<T> 객체 반환
+    private func cacheData<T>(url: URL) -> Single<T>? {
+        guard let value = self.cache[url] as? T else { return nil }
         
+        let single = Single<T>.create(subscribe: { obserser in
+            obserser(.success(value))
+            return Disposables.create()
+        })
+        
+        return single
+    }
+    
 }
 
 enum NetworkManagerError: Error {

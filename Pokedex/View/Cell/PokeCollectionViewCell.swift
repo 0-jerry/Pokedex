@@ -18,7 +18,7 @@ final class PokeCollectionViewCell: UICollectionViewCell, PokeView {
     var pokeID: Int?
     
     private let disposeBag = DisposeBag()
-    private let pokemonAPIManager = PokemonAPIManager.shared
+    private let detailViewModel = PokemonAPIManager.shared
     
     private let pokeImageView: UIImageView = {
         let imageView = UIImageView()
@@ -63,7 +63,7 @@ final class PokeCollectionViewCell: UICollectionViewCell, PokeView {
     
     func updatePokeUI() {
         guard let pokeID,
-              let single = pokemonAPIManager.fetchPokemonImage(of: pokeID) else { return }
+              let single = detailViewModel.fetchPokemonImage(of: pokeID) else { return }
         
         single.subscribe(onSuccess: { [weak self] data in
             guard let image = UIImage(data: data) else { return }
