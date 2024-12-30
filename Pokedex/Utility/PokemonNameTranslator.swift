@@ -13,8 +13,8 @@ enum PokemonTranslator {
     /// 영어 이름을 한국어로 변환
     /// - Parameter englishName: 포켓몬의 영어 이름
     /// - Returns: 한국어 이름. 지원하지 않는 이름의 경우 `nil`
-    static func getKoreanName(for englishName: String) -> String? {
-        guard let koreanName = koreanNames[englishName.lowercased()] else { return nil }
+    static func getKoreanName(for englishName: String) -> String {
+        guard let koreanName = koreanNames[englishName.lowercased()] else { return englishName }
         
         return koreanName
     }
@@ -49,10 +49,10 @@ enum PokemonTranslator {
         "raichu": "라이츄",
         "sandshrew": "모래두지",
         "sandslash": "고지",
-        "nidoran♀": "니드런♀",
+        "nidoran-f": "니드런♀",
         "nidorina": "니드리나",
         "nidoqueen": "니드퀸",
-        "nidoran♂": "니드런♂",
+        "nidoran-m": "니드런♂",
         "nidorino": "니드리노",
         "nidoking": "니드킹",
         "clefairy": "삐삐",

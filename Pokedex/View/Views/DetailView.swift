@@ -10,10 +10,6 @@ import UIKit
 import RxSwift
 import SnapKit
 
-#Preview {
-    DetailViewController()
-}
-
 final class DetailView: UIView {
     
     let detailViewModel: DetailViewModel = PokemonAPIManager.shared
@@ -37,7 +33,7 @@ final class DetailView: UIView {
     private let pokeImageView: UIImageView = {
         let imageView = UIImageView()
         
-        imageView.contentMode = .scaleToFill
+        imageView.contentMode = .scaleAspectFit
         imageView.backgroundColor = .clear
         
         return imageView

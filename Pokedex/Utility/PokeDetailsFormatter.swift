@@ -15,15 +15,14 @@ struct PokeDetailsFormatter {
     
     init?(_ pokeDetails: PokemonDetails) {
         guard let name = pokeDetails.name,
-              let koreanName = PokemonTranslator.getKoreanName(for: name),
               let id = pokeDetails.id,
               let types = pokeDetails.types,
               let height = pokeDetails.height,
               let weight = pokeDetails.weight else { return nil }
         
-        self.name = "No.\(id)  \(koreanName)"
+        self.name = "No.\(id)  \(PokemonTranslator.getKoreanName(for: name))"
         self.type = "타입: \(types.map { $0.korean }.joined(separator: ", "))"
         self.height = "키: \(Double(height)/10) m"
-        self.weight = "몸무게: \(Double(weight)/10) kg"
+        self.weight = "몸무게: \(Double(weight)/10) m"
     }
 }

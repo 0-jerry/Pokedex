@@ -6,8 +6,8 @@
 //
 
 import Foundation
+
 import RxSwift
-import UIKit
 
 /// Singleton 객체 
 ///

@@ -7,9 +7,8 @@
 
 import UIKit
 
-import SnapKit
 import RxSwift
-import Kingfisher
+import SnapKit
 
 final class PokeCollectionViewCell: UICollectionViewCell, PokeView {
     

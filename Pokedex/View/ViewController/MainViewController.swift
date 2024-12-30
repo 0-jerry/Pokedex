@@ -6,22 +6,21 @@
 //
 
 import UIKit
-import SnapKit
-import RxSwift
 
-final class PokedexMainViewController: UIViewController {
+import RxSwift
+import SnapKit
+
+final class MainViewController: UIViewController {
     
     private let mainViewModel: MainViewModel = PokemonAPIManager.shared
     private var poketmonList: PokemonList?
     private let disposeBag = DisposeBag()
-    private var mainView: MainView?
+    private let mainView: MainView = MainView()
     
     override func loadView() {
         super.loadView()
         
-        let mainView = MainView(frame: view.frame)
-        self.mainView = mainView
-        view = mainView
+        view = self.mainView
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -33,8 +32,8 @@ final class PokedexMainViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        mainView?.collectionView.dataSource = self
-        mainView?.collectionView.delegate = self
+        mainView.collectionView.dataSource = self
+        mainView.collectionView.delegate = self
         updatePokemons()
     }
     
@@ -45,23 +44,22 @@ final class PokedexMainViewController: UIViewController {
     }
     
     private func updatePokemons() {
-        guard let single = mainViewModel.fetchPokemonList(limit: 20, offset: 0) else { return }
+        guard let single = mainViewModel.fetchPokemonList(limit: 1502, offset: 0) else { return }
         
         single.subscribe(onSuccess: { [weak self] pokemonList in
-            guard let self,
-                  let mainView = self.mainView else { return }
+            guard let self else { return }
             
             self.poketmonList = pokemonList
             
             DispatchQueue.main.async {
-                mainView.reload()
+                self.mainView.reload()
             }
         }).disposed(by: disposeBag)
     }
     
 }
 
-extension PokedexMainViewController: UICollectionViewDataSource {
+extension MainViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         poketmonList?.pokemons.count ?? 0
@@ -87,7 +85,7 @@ extension PokedexMainViewController: UICollectionViewDataSource {
 }
 
 
-extension PokedexMainViewController: UICollectionViewDelegate {
+extension MainViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let pokemon = poketmonList?.pokemons[indexPath.item],
               let id = pokemon.id else { return }
@@ -97,9 +95,4 @@ extension PokedexMainViewController: UICollectionViewDelegate {
         
         self.navigationController?.pushViewController(detailViewController, animated: true)
     }
-}
-
-
-#Preview {
-    PokedexMainViewController()
 }
