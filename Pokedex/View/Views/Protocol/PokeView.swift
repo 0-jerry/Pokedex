@@ -10,7 +10,7 @@ import UIKit
 protocol PokeView: UIView {
     
     var pokeID: Int? { get set }
-    
+
     func updatePokeUI()
 
 }

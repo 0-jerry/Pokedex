@@ -9,7 +9,7 @@ import UIKit
 import SnapKit
 import RxSwift
 
-class ViewController: UIViewController {
+class PokedexMainViewController: UIViewController {
     
     private let pokemonAPIManager = PokemonAPIManager.shared
     private var poketmonList: PokemonList?
@@ -27,7 +27,7 @@ class ViewController: UIViewController {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.isHidden = true
     }
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -37,26 +37,27 @@ class ViewController: UIViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        self.navigationController?.navigationBar.isHidden = true
+        self.navigationController?.navigationBar.isHidden = false
     }
     
     private func updatePokemons() {
-        pokemonAPIManager.fetchPokemonList(limit: 100, offset: 0)?
-            .subscribe(onSuccess: { [weak self] pokemonList in
-                guard let self,
-                      let mainView = self.mainView else { return }
-                
-                self.poketmonList = pokemonList
-                
-                DispatchQueue.main.async {
-                    mainView.reload()
-                }
-            }).disposed(by: disposeBag)
+        guard let single = pokemonAPIManager.fetchPokemonList(limit: 200, offset: 0) else { return }
+        
+        single.subscribe(onSuccess: { [weak self] pokemonList in
+            guard let self,
+                  let mainView = self.mainView else { return }
+            
+            self.poketmonList = pokemonList
+            
+            DispatchQueue.main.async {
+                mainView.reload()
+            }
+        }).disposed(by: disposeBag)
     }
     
 }
 
-extension ViewController: UICollectionViewDataSource {
+extension PokedexMainViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         poketmonList?.pokemons.count ?? 0
@@ -72,10 +73,9 @@ extension ViewController: UICollectionViewDataSource {
         return cell
     }
     
-    
 }
 
 
 #Preview {
-    ViewController()
+    PokedexMainViewController()
 }

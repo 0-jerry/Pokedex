@@ -7,6 +7,8 @@
 
 import Foundation
 import RxSwift
+import Kingfisher
+import UIKit
 
 class PokemonAPIManager {
     
@@ -28,6 +30,7 @@ class PokemonAPIManager {
     
     func fetchPokemonImage(of id: Int) -> Single<Data>? {
         guard let url = PokeFormatter.image(of: id) else { return nil }
-        return networkManager.fetch(url: url)
+        return networkManager.fetchImage(url: url)
     }
+    
 }

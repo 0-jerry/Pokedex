@@ -6,7 +6,6 @@
 //
 
 import Foundation
-
 import RxSwift
 
 /// Network 통신을 담당하는 싱글톤 매니저
@@ -18,6 +17,7 @@ final class NetworkManager {
     
     private init() {}
     
+    private var cache = [URL: Any]()
 }
 
 extension NetworkManager {
@@ -28,13 +28,21 @@ extension NetworkManager {
     /// - Returns: Decodable 타입으로 디코딩된 응답 데이터를 담은 Single<T> 객체
     func fetch<T: Decodable>(url: URL) -> Single<T> {
         
+        if let decodable = self.cache[url] as? T {
+            let single = Single<T>.create(subscribe: { obserser in
+                obserser(.success(decodable))
+                return Disposables.create()
+            })
+            return single
+        }
+        
         // 컴플리션을 통해 응답에 대한 observer를 실행시키는 Single 객체
         let single = Single<T>.create(subscribe: { observer in
             let request = URLRequest(url: url)
             URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
                 
                 // 앱이 꺼져 NetworkManager 가 메모리에서 해제된 경우
-                guard self != nil else {
+                guard let self else {
                     observer(.failure(NetworkManagerError.unknown))
                     return
                 }
@@ -68,12 +76,52 @@ extension NetworkManager {
                 
                 // 정상적인 데이터 반환
                 observer(.success(decodable))
-                
+                self.cache[url] = decodable
             }.resume()
             
             return Disposables.create()
         })
         
+        return single
+    }
+    
+    func fetchImage(url: URL) -> Single<Data> {
+        
+        if let data = self.cache[url] as? Data {
+            let single = Single<Data>.create(subscribe: { obserser in
+                obserser(.success(data))
+                return Disposables.create()
+            })
+            return single
+        }
+        
+        // 컴플리션을 통해 응답에 대한 observer를 실행시키는 Single 객체
+        let single = Single<Data>.create(subscribe: { observer in
+            let request = URLRequest(url: url)
+            URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+                guard self != nil else {
+                    observer(.failure(NetworkManagerError.unknown))
+                    return }
+                
+                if let error {
+                    observer(.failure(error))
+                    return
+                }
+                
+                guard let data,
+                      let response = response as? HTTPURLResponse else {
+                    observer(.failure(NetworkManagerError.invalidResponse(statusCode: nil)))
+                    return
+                }
+                
+                guard (200..<300).contains(response.statusCode) else {
+                    observer(.failure(NetworkManagerError.invalidResponse(statusCode: response.statusCode)))
+                    return
+                }
+                observer(.success(data))
+            }.resume()
+            return Disposables.create()
+        })
         return single
     }
         

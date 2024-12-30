@@ -8,8 +8,6 @@
 import UIKit
 import SnapKit
 
-//protocol Poke
-
 final class MainView: UIView {
     
     private let pokeBallImageView: UIImageView = {
@@ -73,7 +71,7 @@ final class MainView: UIView {
             collectionView.bottom.equalTo(safeAreaLayoutGuide).inset(30)
         }
         
-//        collectionView.backgroundColor = .green
+        collectionView.backgroundColor = UIColor.darkRed
     }
     
     private func configureCollectionView() {
