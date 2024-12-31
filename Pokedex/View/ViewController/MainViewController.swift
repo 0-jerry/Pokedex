@@ -13,7 +13,7 @@ import SnapKit
 final class MainViewController: UIViewController {
     
     private let mainViewModel: MainViewModel = PokemonAPIManager.shared
-    private var poketmonList: PokemonList?
+    private var pokemonList: PokemonList?
     private let disposeBag = DisposeBag()
     private let mainView: MainView = MainView()
     
@@ -23,18 +23,19 @@ final class MainViewController: UIViewController {
         view = self.mainView
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        
-        self.navigationController?.navigationBar.isHidden = true
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         mainView.collectionView.dataSource = self
         mainView.collectionView.delegate = self
+        
         updatePokemons()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        self.navigationController?.navigationBar.isHidden = true
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -44,15 +45,14 @@ final class MainViewController: UIViewController {
     }
     
     private func updatePokemons() {
-        guard let single = mainViewModel.fetchPokemonList(limit: 1502, offset: 0) else { return }
+        guard let single = mainViewModel.fetchPokemonList(limit: 20, offset: 0) else { return }
         
-        single.subscribe(onSuccess: { [weak self] pokemonList in
-            guard let self else { return }
-            
-            self.poketmonList = pokemonList
+        single.subscribe(
+            onSuccess: { [weak self] pokemonList in
+            self?.pokemonList = pokemonList
             
             DispatchQueue.main.async {
-                self.mainView.reload()
+                self?.mainView.reloadCollectionView()
             }
         }).disposed(by: disposeBag)
     }
@@ -62,7 +62,7 @@ final class MainViewController: UIViewController {
 extension MainViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        poketmonList?.pokemons.count ?? 0
+        pokemonList?.pokemons.count ?? 0
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -72,12 +72,16 @@ extension MainViewController: UICollectionViewDataSource {
             return defaultCell
         }
         
-        guard let pokemon = poketmonList?.pokemons[indexPath.item],
+        guard let pokemon = pokemonList?.pokemons[indexPath.item],
               let id = pokemon.id else {
             return defaultCell
         }
         
-        pokeCollectionViewCell.configurePokeID(id)
+        mainViewModel.fetchPokemonImage(of: id)?.subscribe(
+            onSuccess: { data in
+                pokeCollectionViewCell.updateImage(by: data)
+            }
+        ).disposed(by: disposeBag)
         
         return defaultCell
     }
@@ -86,8 +90,9 @@ extension MainViewController: UICollectionViewDataSource {
 
 
 extension MainViewController: UICollectionViewDelegate {
+    
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard let pokemon = poketmonList?.pokemons[indexPath.item],
+        guard let pokemon = pokemonList?.pokemons[indexPath.item],
               let id = pokemon.id else { return }
         
         let detailViewController = DetailViewController()
@@ -95,4 +100,5 @@ extension MainViewController: UICollectionViewDelegate {
         
         self.navigationController?.pushViewController(detailViewController, animated: true)
     }
+    
 }

@@ -8,6 +8,7 @@
 import Foundation
 
 struct PokeDetailsFormatter {
+    
     let name: String
     let type: String
     let height: String
@@ -20,9 +21,12 @@ struct PokeDetailsFormatter {
               let height = pokeDetails.height,
               let weight = pokeDetails.weight else { return nil }
         
-        self.name = "No.\(id)  \(PokemonTranslator.getKoreanName(for: name))"
-        self.type = "타입: \(types.map { $0.korean }.joined(separator: ", "))"
+        let koreanName = PokemonTranslator.getKoreanName(for: name)
+        let type = PokemonTypeName.format(types)
+        
+        self.name = "No.\(id)  \(koreanName)"
+        self.type = "타입: \(type)"
         self.height = "키: \(Double(height)/10) m"
-        self.weight = "몸무게: \(Double(weight)/10) m"
+        self.weight = "몸무게: \(Double(weight)/10) kg"
     }
 }

@@ -13,4 +13,6 @@ protocol MainViewModel {
     
     func fetchPokemonList(limit: Int, offset: Int) -> Single<PokemonList>?
     
+    func fetchPokemonImage(of id: Int) -> Single<Data>?
+
 }

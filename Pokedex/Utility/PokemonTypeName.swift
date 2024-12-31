@@ -8,6 +8,7 @@
 import Foundation
 
 enum PokemonTypeName: String, CaseIterable, Codable {
+    
     case normal
     case fire
     case water
@@ -26,7 +27,7 @@ enum PokemonTypeName: String, CaseIterable, Codable {
     case dark
     case steel
     case fairy
-
+    
     var displayName: String {
         switch self {
         case .normal: return "노말"
@@ -48,5 +49,12 @@ enum PokemonTypeName: String, CaseIterable, Codable {
         case .steel: return "강철"
         case .fairy: return "페어리"
         }
+    }
+    
+    static func format(_ types: [PokemonType]) -> String {
+        return types
+            .compactMap { $0.english }
+            .compactMap { PokemonTypeName(rawValue: $0)?.displayName }
+            .joined(separator: ", ")
     }
 }

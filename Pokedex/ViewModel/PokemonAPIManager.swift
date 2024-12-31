@@ -20,17 +20,17 @@ final class PokemonAPIManager: MainViewModel, DetailViewModel {
     private init() {}
     
     func fetchPokemonList(limit: Int, offset: Int) -> Single<PokemonList>? {
-        guard let url = PokeFormatter.list(limit: limit, offset: offset) else { return nil }
+        guard let url = PokeURLFormatter.list(limit: limit, offset: offset) else { return nil }
         return networkManager.fetch(url: url)
     }
     
     func fetchPokemonDetails(of id: Int) -> Single<PokemonDetails>? {
-        guard let url = PokeFormatter.detail(of: id) else { return nil }
+        guard let url = PokeURLFormatter.detail(of: id) else { return nil }
         return networkManager.fetch(url: url)
     }
     
     func fetchPokemonImage(of id: Int) -> Single<Data>? {
-        guard let url = PokeFormatter.image(of: id) else { return nil }
+        guard let url = PokeURLFormatter.image(of: id) else { return nil }
         return networkManager.fetchData(url: url)
     }
     

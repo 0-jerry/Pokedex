@@ -34,12 +34,11 @@ final class MainView: UIView {
         flowlayout.minimumInteritemSpacing = itemSpacing
         
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: flowlayout)
-        collectionView.backgroundColor = .clear
+        collectionView.backgroundColor = .darkRed
+        collectionView.showsVerticalScrollIndicator = false
         
         return collectionView
     }()
-    
-
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -72,14 +71,14 @@ final class MainView: UIView {
             collectionView.bottom.equalTo(safeAreaLayoutGuide).inset(30)
         }
         
-        collectionView.backgroundColor = UIColor.darkRed
     }
     
     private func configureCollectionView() {
         collectionView.register(PokeCollectionViewCell.self, forCellWithReuseIdentifier: PokeCollectionViewCell.id)
     }
     
-    func reload() {
+    func reloadCollectionView() {
         self.collectionView.reloadData()
     }
+    
 }

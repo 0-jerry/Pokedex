@@ -8,16 +8,7 @@
 import Foundation
 
 // 포켓몬 간단한 데이터 형식
-struct Pokemon: Decodable, CustomStringConvertible {
-    
-    var description: String {
-        guard let name,
-              let url else { return "pokemon"}
-        return """
-        name: \(name)
-        url: \(url)
-        """
-    }
+struct Pokemon: Decodable {
     
     let name: String?
     let url: String?
@@ -32,4 +23,5 @@ struct Pokemon: Decodable, CustomStringConvertible {
     }
     
     var detailsURL: URL? { URL(from: url) }
+    
 }

@@ -7,18 +7,12 @@
 
 import UIKit
 
-import RxSwift
 import SnapKit
 
-final class PokeCollectionViewCell: UICollectionViewCell, PokeView {
+final class PokeCollectionViewCell: UICollectionViewCell {
     
     static let id = "PokeCollectionViewCell"
-    
-    var pokeID: Int?
-    
-    private let disposeBag = DisposeBag()
-    private let detailViewModel = PokemonAPIManager.shared
-    
+            
     private let pokeImageView: UIImageView = {
         let imageView = UIImageView()
         
@@ -27,7 +21,6 @@ final class PokeCollectionViewCell: UICollectionViewCell, PokeView {
         
         return imageView
     }()
-    
     
     override func prepareForReuse() {
         super.prepareForReuse()
@@ -46,7 +39,6 @@ final class PokeCollectionViewCell: UICollectionViewCell, PokeView {
     
     private func reset() {
         pokeImageView.image = nil
-        pokeID = nil
     }
     
     private func configureUI() {
@@ -59,19 +51,18 @@ final class PokeCollectionViewCell: UICollectionViewCell, PokeView {
         self.layer.cornerRadius = 10
         self.clipsToBounds = true
     }
+        
+}
+
+// MARK: - PokeView
+
+extension PokeCollectionViewCell {
     
-    func updatePokeUI() {
-        guard let pokeID,
-              let single = detailViewModel.fetchPokemonImage(of: pokeID) else { return }
+    func updateImage(by data: Data) {
+        guard let image = UIImage(data: data) else { return }
         
-        single.subscribe(onSuccess: { [weak self] data in
-            guard let image = UIImage(data: data) else { return }
-            
-            DispatchQueue.main.async {
-                self?.pokeImageView.image = image
-            }
-        }).disposed(by: disposeBag)
-        
+        DispatchQueue.main.async { [weak self] in
+            self?.pokeImageView.image = image
+        }
     }
-    
 }

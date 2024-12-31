@@ -9,7 +9,7 @@ import Foundation
 
 /// Poke URL Formatter
 ///
-struct PokeFormatter {
+struct PokeURLFormatter {
     
     /// Poke Image URL
     static func image(of id: Int) -> URL? {
@@ -31,4 +31,21 @@ struct PokeFormatter {
         
         return listURL
     }
+    
+    /// PokemonList previous URL
+    static func previous(of pokeList: PokemonList) -> URL? {
+        guard let previous = pokeList.previous,
+              let previousURL = URL(string: previous) else { return nil }
+        
+        return previousURL
+    }
+    
+    /// PokemonList next URL
+    static func next(of pokeList: PokemonList) -> URL? {
+        guard let next = pokeList.next,
+              let nextURL = URL(string: next) else { return nil }
+        
+        return nextURL
+    }
+    
 }

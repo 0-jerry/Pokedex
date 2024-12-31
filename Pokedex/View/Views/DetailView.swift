@@ -7,14 +7,11 @@
 
 import UIKit
 
-import RxSwift
 import SnapKit
 
 final class DetailView: UIView {
     
-    let detailViewModel: DetailViewModel = PokemonAPIManager.shared
-    var pokeID: Int?
-    private var disposeBag = DisposeBag()
+    var onPresentAlert: ((UIAlertController) -> Void)?
     
     private let stackView: UIStackView = {
         let stackView = UIStackView()
@@ -26,7 +23,7 @@ final class DetailView: UIView {
         stackView.backgroundColor = .darkRed
         stackView.layer.cornerRadius = 15
         stackView.clipsToBounds = true
-
+        
         return stackView
     }()
     
@@ -49,23 +46,14 @@ final class DetailView: UIView {
         
         return label
     }()
+    
     private let typeLabel: UILabel = littleLabel()
+    
     private let weightLabel: UILabel = littleLabel()
+    
     private let heightLabel: UILabel = littleLabel()
+    
     private let emptyView: UIView = UIView()
-    
-    
-    private static func littleLabel() -> UILabel {
-        let label = UILabel()
-        
-        label.font = .systemFont(ofSize: 20, weight: .semibold)
-        label.textColor = .white
-        label.numberOfLines = 1
-        label.backgroundColor = .clear
-        label.textAlignment = .center
-        
-        return label
-    }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -76,6 +64,11 @@ final class DetailView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
+}
+
+// MARK: - UI
+
+extension DetailView {
     
     private func configureUI() {
         
@@ -93,13 +86,13 @@ final class DetailView: UIView {
         ].forEach { stackView.addArrangedSubview($0) }
         
         stackView.snp.makeConstraints { stackView in
-            stackView.top.equalTo(safeAreaLayoutGuide).inset(100)
+            stackView.top.equalTo(safeAreaLayoutGuide).inset(60)
             stackView.leading.trailing.equalToSuperview().inset(20)
         }
         
         pokeImageView.snp.makeConstraints { imageView in
             imageView.top.equalToSuperview().inset(30)
-            imageView.width.height.equalTo(200)
+            imageView.width.height.equalTo(300)
         }
         
         nameLabel.snp.makeConstraints { label in
@@ -112,51 +105,44 @@ final class DetailView: UIView {
             weightLabel,
             heightLabel,
             emptyView
-        ].forEach { $0.snp.makeConstraints { label in
-            label.height.equalTo(30)
-            label.leading.trailing.equalToSuperview().inset(30)
-        }}
+        ].forEach {
+            $0.snp.makeConstraints { view in
+                view.height.equalTo(30)
+                view.leading.trailing.equalToSuperview().inset(30)
+            }
+        }
+        
     }
+
+    private static func littleLabel() -> UILabel {
+        let label = UILabel()
+        
+        label.font = .systemFont(ofSize: 20, weight: .semibold)
+        label.textColor = .white
+        label.numberOfLines = 1
+        label.backgroundColor = .clear
+        label.textAlignment = .center
+        
+        return label
+    }
+
 }
 
-extension DetailView: PokeView {
+// MARK: - PokeView
+
+extension DetailView {
     
-    func updatePokeUI() {
-        updateDetails()
-        updateImage()
+    func updateImage(by data: Data) {
+        guard let image = UIImage(data: data) else { return }
+        
+        DispatchQueue.main.async {
+            self.pokeImageView.image = image
+        }
     }
     
-    private func updateDetails() {
-        guard let pokeID else { return }
-        
-        let detailsSingle = detailViewModel.fetchPokemonDetails(of: pokeID)
-        detailsSingle?.subscribe(onSuccess: { [weak self] pokemonDetails in
-            guard let self else { return }
-            self.updateLabel(pokemonDetails: pokemonDetails)
-        }, onFailure: { error in print(error)}).disposed(by: disposeBag)
-    }
-    
-    private func updateImage() {
-        guard let pokeID else { return }
-        
-        let imageSingle = detailViewModel.fetchPokemonImage(of: pokeID)
-        imageSingle?.subscribe(onSuccess: { [weak self] data in
-            guard let self,
-                  let image = UIImage(data: data) else { return }
-            
-            DispatchQueue.main.async {
-                self.pokeImageView.image = image
-            }
-            
-        }).disposed(by: disposeBag)
-        
-    }
-    
-    
-    private func updateLabel(pokemonDetails: PokemonDetails) {
+    func updateLabel(by pokemonDetails: PokemonDetails) {
         guard let pokeDetailsFormatter = PokeDetailsFormatter(pokemonDetails) else { return }
         
-
         DispatchQueue.main.async {
             self.nameLabel.text = pokeDetailsFormatter.name
             self.typeLabel.text = pokeDetailsFormatter.type
