@@ -7,12 +7,15 @@
 
 import UIKit
 
+import RxSwift
 import SnapKit
 
 final class PokeCollectionViewCell: UICollectionViewCell {
-    
+        
     static let id = "PokeCollectionViewCell"
-            
+
+    private(set) var disposeBag = DisposeBag()
+    
     private let pokeImageView: UIImageView = {
         let imageView = UIImageView()
         
@@ -24,7 +27,8 @@ final class PokeCollectionViewCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        reset()
+        pokeImageView.image = nil
+        disposeBag = DisposeBag()
     }
     
     override init(frame: CGRect) {
@@ -39,6 +43,7 @@ final class PokeCollectionViewCell: UICollectionViewCell {
     
     private func reset() {
         pokeImageView.image = nil
+        disposeBag = DisposeBag()
     }
     
     private func configureUI() {
@@ -66,3 +71,6 @@ extension PokeCollectionViewCell {
         }
     }
 }
+
+///prepareForReuse 문제가 아닌 비동기 문제?
+///subscribe 에 의해 응답에 따라 변경되기에 연속적으로 이미지가 바뀌며 시각적으로 드러남

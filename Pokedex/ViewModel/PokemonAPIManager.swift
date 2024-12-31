@@ -34,6 +34,11 @@ final class PokemonAPIManager: MainViewModel, DetailViewModel {
         return networkManager.fetchData(url: url)
     }
     
+    func fetchNextPokemonList(_ pokemonList: PokemonList) -> Single<PokemonList>? {
+        guard let url = PokeURLFormatter.next(of: pokemonList) else { return nil }
+        return networkManager.fetch(url: url)
+    }
+    
 }
 
 

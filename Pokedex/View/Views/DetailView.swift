@@ -91,7 +91,6 @@ extension DetailView {
         }
         
         pokeImageView.snp.makeConstraints { imageView in
-            imageView.top.equalToSuperview().inset(30)
             imageView.width.height.equalTo(300)
         }
         

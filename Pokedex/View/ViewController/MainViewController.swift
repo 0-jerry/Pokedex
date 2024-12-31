@@ -14,6 +14,7 @@ final class MainViewController: UIViewController {
     
     private let mainViewModel: MainViewModel = PokemonAPIManager.shared
     private var pokemonList: PokemonList?
+    private var pokemons = [Pokemon]()
     private let disposeBag = DisposeBag()
     private let mainView: MainView = MainView()
     
@@ -29,7 +30,7 @@ final class MainViewController: UIViewController {
         mainView.collectionView.dataSource = self
         mainView.collectionView.delegate = self
         
-        updatePokemons()
+        configureFirstPokeList()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -44,17 +45,49 @@ final class MainViewController: UIViewController {
         self.navigationController?.navigationBar.isHidden = false
     }
     
-    private func updatePokemons() {
+    private func updatePokemonList(_ pokemonList: PokemonList) {
+        self.pokemonList = pokemonList
+        self.pokemons += pokemonList.pokemons
+        
+        DispatchQueue.main.async {
+            self.mainView.reloadCollectionView()
+        }
+    }
+    
+    private func configureFirstPokeList() {
         guard let single = mainViewModel.fetchPokemonList(limit: 20, offset: 0) else { return }
         
         single.subscribe(
             onSuccess: { [weak self] pokemonList in
-            self?.pokemonList = pokemonList
-            
-            DispatchQueue.main.async {
-                self?.mainView.reloadCollectionView()
+                self?.updatePokemonList(pokemonList)
             }
-        }).disposed(by: disposeBag)
+        ).disposed(by: disposeBag)
+    }
+    
+    private func appendPokemons() {
+        guard let pokemonList,
+        let single = mainViewModel.fetchNextPokemonList(pokemonList) else { return }
+        
+        single.subscribe(
+            onSuccess: { [weak self] pokemonList in
+                self?.updatePokemonList(pokemonList)
+            }
+        ).disposed(by: disposeBag)
+    }
+    
+    private func presentErrorAlert(_ error: Error) {
+        let message = error.localizedDescription
+        let alertController = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        let retry = UIAlertAction(title: "retry", style: .default, handler: { [weak self] _ in
+            self?.configureFirstPokeList()
+            self?.mainView.reloadCollectionView()
+        })
+        let cancel = UIAlertAction(title: "cancel", style: .cancel)
+        
+        alertController.addAction(retry)
+        alertController.addAction(cancel)
+        
+        present(alertController, animated: true)
     }
     
 }
@@ -62,7 +95,7 @@ final class MainViewController: UIViewController {
 extension MainViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        pokemonList?.pokemons.count ?? 0
+        return pokemons.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -71,17 +104,15 @@ extension MainViewController: UICollectionViewDataSource {
         guard let pokeCollectionViewCell = defaultCell as? PokeCollectionViewCell else {
             return defaultCell
         }
-        
-        guard let pokemon = pokemonList?.pokemons[indexPath.item],
-              let id = pokemon.id else {
+        let pokemon = pokemons[indexPath.item]
+        guard let pokeID = pokemon.id else {
             return defaultCell
         }
-        
-        mainViewModel.fetchPokemonImage(of: id)?.subscribe(
-            onSuccess: { data in
-                pokeCollectionViewCell.updateImage(by: data)
+        mainViewModel.fetchPokemonImage(of: pokeID)?.subscribe(
+            onSuccess: { [weak pokeCollectionViewCell] data in
+                pokeCollectionViewCell?.updateImage(by: data)
             }
-        ).disposed(by: disposeBag)
+        ).disposed(by: pokeCollectionViewCell.disposeBag)
         
         return defaultCell
     }
@@ -92,13 +123,18 @@ extension MainViewController: UICollectionViewDataSource {
 extension MainViewController: UICollectionViewDelegate {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard let pokemon = pokemonList?.pokemons[indexPath.item],
-              let id = pokemon.id else { return }
+        let pokemon = pokemons[indexPath.item]
+        guard let pokeID = pokemon.id else { return }
         
         let detailViewController = DetailViewController()
-        detailViewController.configurePokeID(id)
-        
+        detailViewController.configurePokeID(pokeID)
         self.navigationController?.pushViewController(detailViewController, animated: true)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        if pokemons.count - 3 == indexPath.item {
+            appendPokemons()
+        }
     }
     
 }

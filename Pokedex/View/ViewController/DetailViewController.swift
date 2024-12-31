@@ -39,14 +39,16 @@ final class DetailViewController: UIViewController {
         self.navigationController?.navigationBar.isHidden = true
     }
     
+    // PokeID 를 설정
     func configurePokeID(_ pokeID: Int) {
         self.pokeID = pokeID
         binding()
     }
     
-    func binding() {
+    // DetailViewModel 과 DetailView 연결
+    private func binding() {
         guard let pokeID else { return }
-        
+        // DetailView 의 클로저가 Single<PokemonDetails> 구독
         detailViewModel
             .fetchPokemonDetails(of: pokeID)?
             .subscribe(
@@ -55,6 +57,7 @@ final class DetailViewController: UIViewController {
                 }
             ).disposed(by: disposeBag)
         
+        // DetailView 의 클로저가 Single<Data> 구독
         detailViewModel
             .fetchPokemonImage(of: pokeID)?
             .subscribe(
