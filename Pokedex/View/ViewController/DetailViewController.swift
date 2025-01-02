@@ -7,13 +7,14 @@
 
 import UIKit
 
+import RxSwift
 import SnapKit
 
 final class DetailViewController: UIViewController, ErrorAlertPresentable {
     
-    private(set) var pokeID: Int?
+    private let disposeBag = DisposeBag()
     
-    private var detailsViewModel: DetailViewModel?
+    private let detailsViewModel: DetailViewModel
     
     private let stackView: UIStackView = {
         let stackView = UIStackView()
@@ -57,10 +58,23 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
     
     private let emptyView: UIView = UIView()
     
+    init(detailsViewModel: DetailViewModel) {
+        self.detailsViewModel = detailsViewModel
+        super.init(nibName: nil, bundle: nil)
+        
+        bind()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         configureUI()
+        // FIXME: -
+        detailsViewModel.publish()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -76,7 +90,17 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
         self.navigationController?.navigationBar.isHidden = true
     }
     
-    
+    private func bind() {
+        detailsViewModel.pokeDetails
+            .subscribe { [weak self] pokeDetailsFormmater in
+                self?.updateLabel(by: pokeDetailsFormmater)
+            }.disposed(by: disposeBag)
+        
+        detailsViewModel.pokeImage
+            .subscribe { [weak self] image in
+                self?.updateImage(by: image)
+            }.disposed(by: disposeBag)
+    }
     
     private func configureUI() {
         
@@ -120,7 +144,7 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
         }
         
     }
-
+    
     private static func littleLabel() -> UILabel {
         let label = UILabel()
         
@@ -131,12 +155,6 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
         label.textAlignment = .center
         
         return label
-    }
-    
-    // PokeID 를 설정
-    func configurePokeID(_ pokeID: Int) {
-        self.pokeID = pokeID
-        self.detailsViewModel = DetailViewModel(detailViewController: self)
     }
     
     func updateImage(by image: UIImage) {
@@ -153,5 +171,5 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
             self.weightLabel.text = pokeDetailsFormatter.weight
         }
     }
-
+    
 }

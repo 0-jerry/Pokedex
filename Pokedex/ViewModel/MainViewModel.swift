@@ -13,18 +13,17 @@ final class MainViewModel {
     
     private let pokemonAPIManager = PokemonAPIManager.shared
     
+    private let pokemonsSubject = PublishSubject<[Pokemon]>()
+    
+    var pokemons: Observable<[Pokemon]> {
+        return pokemonsSubject.asObservable()
+    }
+    
     private var pokemonList: PokemonList?
-    
-    private(set) var pokemons = [Pokemon]()
-    
-    private weak var mainViewController: MainViewController?
-    
+            
     private let disposeBag = DisposeBag()
     
-    init(mainViewController: MainViewController) {
-        self.mainViewController = mainViewController
-        self.fetchFirstPokeList()
-    }
+    init() {}
     
     func fetchPokeList() {
         if pokemonList == nil {
@@ -37,20 +36,9 @@ final class MainViewModel {
     private func fetchFirstPokeList() {
         pokemonAPIManager
             .fetchPokemonList(limit: 20, offset: 0)?
-            .subscribe(
-                onSuccess: { [weak self] pokemonList in
-                    self?.updatePokeList(pokemonList)
-                },
-                onFailure: { [weak self] error in
-                    switch error {
-                    case NetworkManagerError.decodeFailed:
-                        self?.mainViewController?
-                            .presentErroAlert(error, completion: nil)
-                    default:
-                        self?.mainViewController?
-                            .presentErroAlert(error, completion: self?.fetchFirstPokeList)
-                    }
-                }
+            .subscribe(onSuccess: { [weak self] pokemonList in
+                self?.publishPokemons(pokemonList)
+            }
             ).disposed(by: disposeBag)
     }
     
@@ -60,28 +48,17 @@ final class MainViewModel {
             .fetchNextPokemonList(pokemonList)?
             .subscribe(
                 onSuccess: { [weak self] pokemonList in
-                    self?.updatePokeList(pokemonList)
-                },
-                onFailure: { [weak self] error in
-                    switch error {
-                    case NetworkManagerError.decodeFailed:
-                        self?.mainViewController?
-                            .presentErroAlert(error, completion: nil)
-                    default:
-                        self?.mainViewController?
-                            .presentErroAlert(error, completion: self?.fetchNewPokeList)
-                    }
+                    self?.publishPokemons(pokemonList)
                 }
             ).disposed(by: disposeBag)
     }
     
-    private func updatePokeList(_ pokemonList: PokemonList) {
+    private func publishPokemons(_ pokemonList: PokemonList) {
         self.pokemonList = pokemonList
         
         if let pokemons = pokemonList.pokemons {
-            self.pokemons += pokemons
+            pokemonsSubject.onNext(pokemons)
         }
-        
-        self.mainViewController?.viewReload()
     }
+    
 }

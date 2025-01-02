@@ -8,10 +8,26 @@
 import UIKit
 
 import SnapKit
+import RxSwift
 
 final class MainViewController: UIViewController, ErrorAlertPresentable {
     
-    private var mainViewModel: MainViewModel?
+    init() {
+        self.mainViewModel = MainViewModel()
+        super.init(nibName: nil, bundle: nil)
+        
+        bind()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+        
+    private let mainViewModel: MainViewModel
+    
+    private let disposeBag = DisposeBag()
+    
+    private var pokemons = [Pokemon]()
     
     // 포켓몬 볼 이미지 뷰
     private let pokeBallImageView: UIImageView = {
@@ -47,9 +63,10 @@ final class MainViewController: UIViewController, ErrorAlertPresentable {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.mainViewModel = MainViewModel(mainViewController: self)
         configureUI()
         configureCollectionView()
+        //FIXME: -
+        mainViewModel.fetchPokeList()
     }
     
     private func configureUI() {
@@ -74,25 +91,24 @@ final class MainViewController: UIViewController, ErrorAlertPresentable {
         
     }
     
-    
     private func configureCollectionView() {
         collectionView.register(PokeCollectionViewCell.self, forCellWithReuseIdentifier: PokeCollectionViewCell.id)
         collectionView.dataSource = self
         collectionView.delegate = self
     }
     
-    func viewReload() {
+    private func bind() {
+        mainViewModel.pokemons
+            .subscribe { [weak self] pokemons in
+            self?.configurePokemons(pokemons)
+        }.disposed(by: disposeBag)
+    }
+    
+    private func configurePokemons(_ pokemons: [Pokemon]) {
+        self.pokemons += pokemons
         DispatchQueue.main.async {
             self.collectionView.reloadData()
         }
-    }
-    
-    func presentErroAlert(_ error: Error, completion: (() -> Void)?) {
-        let alertController = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
-        
-        let cancelAction = UIAlertAction(title: "retry", style: .default)
-        alertController.addAction(cancelAction)
-        self.navigationController?.present(alertController, animated: true, completion: completion)
     }
 }
 
@@ -100,15 +116,14 @@ final class MainViewController: UIViewController, ErrorAlertPresentable {
 extension MainViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        guard let mainViewModel else { return 0 }
-        return mainViewModel.pokemons.count
+        return pokemons.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let defaultCell = collectionView.dequeueReusableCell(withReuseIdentifier: PokeCollectionViewCell.id, for: indexPath)
         
         guard let pokeCollectionViewCell = defaultCell as? PokeCollectionViewCell,
-              let pokeID = mainViewModel?.pokemons[indexPath.item].id else { return defaultCell }
+              let pokeID = pokemons[indexPath.item].id else { return defaultCell }
         
         //pokeCollectionViewCell - configure
         pokeCollectionViewCell.configurePokeID(pokeID)
@@ -122,16 +137,17 @@ extension MainViewController: UICollectionViewDataSource {
 extension MainViewController: UICollectionViewDelegate {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard let pokeID = mainViewModel?.pokemons[indexPath.item].id else { return }
+        guard let pokeID = pokemons[indexPath.item].id else { return }
         
-        let detailViewController = DetailViewController()
-        detailViewController.configurePokeID(pokeID)
+        let detailViewModel = DetailViewModel(pokeID: pokeID)
+        let detailViewController = DetailViewController(detailsViewModel: detailViewModel)
+        
         self.navigationController?.pushViewController(detailViewController, animated: true)
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        guard let mainViewModel else { return }
-        if mainViewModel.pokemons.count - 3 == indexPath.item {
+        if pokemons.count - 3 == indexPath.item {
+            //FIXME: -
             mainViewModel.fetchPokeList()
         }
     }

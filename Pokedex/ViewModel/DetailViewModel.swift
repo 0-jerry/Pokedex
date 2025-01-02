@@ -14,63 +14,50 @@ final class DetailViewModel {
     private let disposeBag = DisposeBag()
     
     private let pokeAPIManager = PokemonAPIManager.shared
+        
+    private let pokeDetailsPublisher = PublishSubject<PokeDetailsFormatter>()
     
-    private weak var detailViewController: DetailViewController?
+    private let pokeImagePublisher = PublishSubject<UIImage>()
     
-    init(detailViewController: DetailViewController) {
-        self.detailViewController = detailViewController
-        //pokeID 가 설정되는 것에 대해 관측하면 좋을 것 같다.
-        self.fetchPokeImage()
-        self.fetchPokeDetails()
+    private let pokeID: Int
+    
+    var pokeDetails: Observable<PokeDetailsFormatter> {
+        return pokeDetailsPublisher.asObservable()
     }
     
+    var pokeImage: Observable<UIImage> {
+        return pokeImagePublisher.asObservable()
+    }
     
-    private func fetchPokeDetails() {
-        guard let pokeID = detailViewController?.pokeID else { return }
-        
+    init(pokeID: Int) {
+        self.pokeID = pokeID
+    }
+    
+    // 개선 방향 찾아야함 -> ViewDidload 시점에 실행되게 하는 방법?
+    func publish() {
+        fetchPokeImage(pokeID)
+        fetchPokeDetails(pokeID)
+    }
+    
+    private func fetchPokeDetails(_ pokeID: Int) {
         pokeAPIManager
             .fetchPokemonDetails(of: pokeID)?
+            .compactMap { PokeDetailsFormatter($0) }
             .subscribe(
-                onSuccess: { [weak self] pokeDetails in
-                    guard let pokeDeatailFormatter = PokeDetailsFormatter(pokeDetails) else { return }
-                    self?.detailViewController?
-                        .updateLabel(by: pokeDeatailFormatter)
-                },
-                onFailure: { [weak self] error in
-                    switch error {
-                    case NetworkManagerError.decodeFailed:
-                        self?.detailViewController?
-                            .presentErroAlert(error, completion: nil)
-                    default:
-                        self?.detailViewController?
-                            .presentErroAlert(error, completion: self?.fetchPokeDetails)
-                    }
+                onSuccess: { [weak self] pokeDetailsFormatter in
+                    self?.pokeDetailsPublisher.onNext(pokeDetailsFormatter)
                 }
             ).disposed(by: disposeBag)
     }
     
-    
-    private func fetchPokeImage() {
-        guard let pokeID = detailViewController?.pokeID else { return }
-        
+    private func fetchPokeImage(_ pokeID: Int) {
         pokeAPIManager
             .fetchPokemonImage(of: pokeID)?
+            .compactMap { UIImage(data: $0) }
             .subscribe(
-                onSuccess: { [weak self] data in
-                    guard let image = UIImage(data: data) else { return }
-                    self?.detailViewController?
-                        .updateImage(by: image)
-                },
-                onFailure: { [weak self] error in
-                    switch error {
-                    case NetworkManagerError.decodeFailed:
-                        self?.detailViewController?
-                            .presentErroAlert(error, completion: nil)
-                    default:
-                        self?.detailViewController?
-                            .presentErroAlert(error, completion: self?.fetchPokeImage)
-                    }
-                }
-            ).disposed(by: disposeBag)
+                onSuccess: { [weak self] image in
+                    self?.pokeImagePublisher.onNext(image)
+                }).disposed(by: disposeBag)
     }
+    
 }
