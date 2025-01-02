@@ -7,114 +7,113 @@
 
 import UIKit
 
-import RxSwift
 import SnapKit
 
-final class MainViewController: UIViewController {
+final class MainViewController: UIViewController, ErrorAlertPresentable {
     
-    private let mainViewModel: MainViewModel = PokemonAPIManager.shared
-    private var pokemonList: PokemonList?
-    private var pokemons = [Pokemon]()
-    private let disposeBag = DisposeBag()
-    private let mainView: MainView = MainView()
+    private var mainViewModel: MainViewModel?
     
-    override func loadView() {
-        super.loadView()
+    // 포켓몬 볼 이미지 뷰
+    private let pokeBallImageView: UIImageView = {
+        let imageView = UIImageView()
         
-        view = self.mainView
-    }
+        let pokeBallImage = UIImage(resource: .pokeBall)
+        imageView.image = pokeBallImage
+        imageView.backgroundColor = .clear
+        imageView.contentMode = .scaleAspectFit
+        
+        return imageView
+    }()
+    
+    // 컬렌션 뷰
+    private let collectionView: UICollectionView = {
+        
+        let itemsForLow: CGFloat = 3
+        let itemSpacing: CGFloat = 10
+        let width = (UIScreen.main.bounds.width - (itemsForLow - 1) * itemSpacing) / itemsForLow
+        
+        let flowlayout = UICollectionViewFlowLayout()
+        flowlayout.itemSize = .init(width: width, height: width)
+        flowlayout.minimumLineSpacing = itemSpacing
+        flowlayout.minimumInteritemSpacing = itemSpacing
+        
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: flowlayout)
+        collectionView.backgroundColor = .darkRed
+        collectionView.showsVerticalScrollIndicator = false
+        
+        return collectionView
+    }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        mainView.collectionView.dataSource = self
-        mainView.collectionView.delegate = self
-        
-        configureFirstPokeList()
+        self.mainViewModel = MainViewModel(mainViewController: self)
+        configureUI()
+        configureCollectionView()
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
+    private func configureUI() {
+        view.backgroundColor = .mainRed
         
-        self.navigationController?.navigationBar.isHidden = true
+        [
+            pokeBallImageView,
+            collectionView
+        ].forEach { view.addSubview($0) }
+        
+        pokeBallImageView.snp.makeConstraints { imageView in
+            imageView.centerX.equalToSuperview()
+            imageView.top.equalTo(view.safeAreaLayoutGuide).inset(20)
+            imageView.width.height.equalTo(120)
+        }
+        
+        collectionView.snp.makeConstraints { collectionView in
+            collectionView.leading.trailing.equalToSuperview()
+            collectionView.top.equalTo(pokeBallImageView.snp.bottom).offset(20)
+            collectionView.bottom.equalTo(view.safeAreaLayoutGuide).inset(30)
+        }
+        
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        
-        self.navigationController?.navigationBar.isHidden = false
+    
+    private func configureCollectionView() {
+        collectionView.register(PokeCollectionViewCell.self, forCellWithReuseIdentifier: PokeCollectionViewCell.id)
+        collectionView.dataSource = self
+        collectionView.delegate = self
     }
     
-    private func updatePokemonList(_ pokemonList: PokemonList) {
-        self.pokemonList = pokemonList
-        self.pokemons += pokemonList.pokemons
-        
+    func viewReload() {
         DispatchQueue.main.async {
-            self.mainView.reloadCollectionView()
+            self.collectionView.reloadData()
         }
     }
     
-    private func configureFirstPokeList() {
-        guard let single = mainViewModel.fetchPokemonList(limit: 20, offset: 0) else { return }
+    func presentErroAlert(_ error: Error, completion: (() -> Void)?) {
+        let alertController = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
         
-        single.subscribe(
-            onSuccess: { [weak self] pokemonList in
-                self?.updatePokemonList(pokemonList)
-            }
-        ).disposed(by: disposeBag)
+        let cancelAction = UIAlertAction(title: "retry", style: .default)
+        alertController.addAction(cancelAction)
+        self.navigationController?.present(alertController, animated: true, completion: completion)
     }
-    
-    private func appendPokemons() {
-        guard let pokemonList,
-        let single = mainViewModel.fetchNextPokemonList(pokemonList) else { return }
-        
-        single.subscribe(
-            onSuccess: { [weak self] pokemonList in
-                self?.updatePokemonList(pokemonList)
-            }
-        ).disposed(by: disposeBag)
-    }
-    
-    private func presentErrorAlert(_ error: Error) {
-        let message = error.localizedDescription
-        let alertController = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
-        let retry = UIAlertAction(title: "retry", style: .default, handler: { [weak self] _ in
-            self?.configureFirstPokeList()
-            self?.mainView.reloadCollectionView()
-        })
-        let cancel = UIAlertAction(title: "cancel", style: .cancel)
-        
-        alertController.addAction(retry)
-        alertController.addAction(cancel)
-        
-        present(alertController, animated: true)
-    }
-    
 }
+
 
 extension MainViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return pokemons.count
+        guard let mainViewModel else { return 0 }
+        return mainViewModel.pokemons.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let defaultCell = collectionView.dequeueReusableCell(withReuseIdentifier: PokeCollectionViewCell.id, for: indexPath)
         
-        guard let pokeCollectionViewCell = defaultCell as? PokeCollectionViewCell else {
-            return defaultCell
-        }
-        let pokemon = pokemons[indexPath.item]
-        guard let pokeID = pokemon.id else {
-            return defaultCell
-        }
-        mainViewModel.fetchPokemonImage(of: pokeID)?.subscribe(
-            onSuccess: { [weak pokeCollectionViewCell] data in
-                pokeCollectionViewCell?.updateImage(by: data)
-            }
-        ).disposed(by: pokeCollectionViewCell.disposeBag)
+        guard let pokeCollectionViewCell = defaultCell as? PokeCollectionViewCell,
+              let pokeID = mainViewModel?.pokemons[indexPath.item].id else { return defaultCell }
         
-        return defaultCell
+        //pokeCollectionViewCell - configure
+        pokeCollectionViewCell.configurePokeID(pokeID)
+        
+        return pokeCollectionViewCell
     }
     
 }
@@ -123,8 +122,7 @@ extension MainViewController: UICollectionViewDataSource {
 extension MainViewController: UICollectionViewDelegate {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let pokemon = pokemons[indexPath.item]
-        guard let pokeID = pokemon.id else { return }
+        guard let pokeID = mainViewModel?.pokemons[indexPath.item].id else { return }
         
         let detailViewController = DetailViewController()
         detailViewController.configurePokeID(pokeID)
@@ -132,9 +130,9 @@ extension MainViewController: UICollectionViewDelegate {
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        if pokemons.count - 3 == indexPath.item {
-            appendPokemons()
+        guard let mainViewModel else { return }
+        if mainViewModel.pokemons.count - 3 == indexPath.item {
+            mainViewModel.fetchPokeList()
         }
     }
-    
 }

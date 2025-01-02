@@ -105,7 +105,6 @@ extension NetworkManager {
                     observer(.failure(error))
                     return
                 }
-                
 
                 // HTTP 가 아닌 응답 경우
                 guard let response = response as? HTTPURLResponse else {
@@ -148,7 +147,19 @@ extension NetworkManager {
     
 }
 
-enum NetworkManagerError: Error {
+enum NetworkManagerError: Error, CustomStringConvertible {
+    
+    var description: String {
+        switch self {
+        case .invalidResponse(statusCode: let statusCode):
+            return "HTTP StatusCode Error - \(statusCode ?? 000)"
+        case .decodeFailed:
+            return "Decode Failed"
+        case .unknown:
+            return "Unknown Error"
+        }
+    }
+    
     case invalidResponse(statusCode: Int?)
     case decodeFailed
     case unknown

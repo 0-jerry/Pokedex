@@ -9,9 +9,9 @@ import Foundation
 
 import RxSwift
 
-/// Singleton 객체 
+/// Singleton 객체
 ///
-final class PokemonAPIManager: MainViewModel, DetailViewModel {
+final class PokemonAPIManager {
     
     static let shared = PokemonAPIManager()
     
