@@ -16,10 +16,12 @@ final class NetworkManager {
     
     static let shared = NetworkManager()
     
-    private let imageCache = ImageCache.shared
+    private let cache: NetworkCache
     
-    private init() {}
-        
+    private init() {
+        self.cache = NetworkCache.shared
+    }
+    
 }
 
 extension NetworkManager {
@@ -29,14 +31,20 @@ extension NetworkManager {
     /// - Parameter url: 요청 URL
     /// - Returns: Decodable 타입으로 디코딩된 응답 데이터를 담은 Single<T> 객체
     func fetch<T: Decodable>(url: URL) -> Single<T> {
-
+        
+        if let data = cache.data(forKey: url),
+           let value = try? JSONDecoder().decode(T.self, from: data) {
+            let single = SingleFormatter.single(value)
+            return single
+        }
+        
         // 컴플리션을 통해 응답에 대한 observer를 실행시키는 Single 객체
         let single = Single<T>.create(subscribe: { observer in
             let request = URLRequest(url: url)
             URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
                 
                 // 앱이 꺼져 NetworkManager 가 메모리에서 해제된 경우
-                guard self != nil else {
+                guard let self else {
                     observer(.failure(NetworkManagerError.unknown))
                     return
                 }
@@ -70,6 +78,7 @@ extension NetworkManager {
                 
                 // 정상적인 데이터 반환
                 observer(.success(decodable))
+                self.cache.setData(data, forKey: url)
             }.resume()
             
             return Disposables.create()
@@ -84,14 +93,12 @@ extension NetworkManager {
     /// - Returns: Data 타입으로 응답 데이터를 담은 Single<Data> 객체
     func fetchImage(url: URL) -> Single<UIImage> {
         
-        if let image = imageCache.image(forKey: url) {
-            let single = Single<UIImage>.create { observer in
-                observer(.success(image))
-                return Disposables.create()
-            }
+        if let data = cache.data(forKey: url),
+           let image = UIImage(data: data) {
+            let single = SingleFormatter.single(image)
             return single
         }
-        
+
         // 컴플리션을 통해 응답에 대한 observer를 실행시키는 Single 객체
         let single = Single<UIImage>.create(subscribe: { observer in
             let request = URLRequest(url: url)
@@ -104,7 +111,7 @@ extension NetworkManager {
                     observer(.failure(error))
                     return
                 }
-
+                
                 // HTTP 가 아닌 응답 경우
                 guard let response = response as? HTTPURLResponse else {
                     observer(.failure(NetworkManagerError.invalidResponse(statusCode: nil)))
@@ -124,8 +131,8 @@ extension NetworkManager {
                     observer(.failure(NetworkManagerError.unknown))
                     return }
                 
+                self.cache.setData(data, forKey: url)
                 observer(.success(image))
-                imageCache.setImage(image, forKey: url)
             }.resume()
             
             return Disposables.create()
@@ -133,22 +140,4 @@ extension NetworkManager {
         return single
     }
     
-    private func cacheData(url: URL) -> Single<Data>? {
-        guard let data = UserDefaults.standard.data(forKey: cachingKey(url)) else { return nil }
-        
-        let single = Single<Data>.create(subscribe: { observer in
-            observer(.success(data))
-            return Disposables.create()
-        })
-        
-        return single
-    }
-    
-    private func saveData(url: URL, data: UIImage) {
-        UserDefaults.standard.set(data, forKey: cachingKey(url))
-    }
-    
-    private func cachingKey(_ url: URL) -> String {
-        return "NetworkManager" + url.absoluteString
-    }
 }

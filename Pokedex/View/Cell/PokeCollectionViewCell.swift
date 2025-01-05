@@ -29,7 +29,7 @@ final class PokeCollectionViewCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-//        reset()
+        reset()
     }
     
     override init(frame: CGRect) {
