@@ -5,7 +5,7 @@
 //  Created by t2023-m0072 on 12/23/24.
 //
 
-import Foundation
+import UIKit
 
 import RxSwift
 
@@ -16,10 +16,10 @@ final class NetworkManager {
     
     static let shared = NetworkManager()
     
+    private let imageCache = ImageCache.shared
+    
     private init() {}
-    
-    private var cache = [URL: Any]()
-    
+        
 }
 
 extension NetworkManager {
@@ -29,18 +29,14 @@ extension NetworkManager {
     /// - Parameter url: 요청 URL
     /// - Returns: Decodable 타입으로 디코딩된 응답 데이터를 담은 Single<T> 객체
     func fetch<T: Decodable>(url: URL) -> Single<T> {
-        
-        if let single: Single<T> = cacheData(url: url) {
-            return single
-        }
-        
+
         // 컴플리션을 통해 응답에 대한 observer를 실행시키는 Single 객체
         let single = Single<T>.create(subscribe: { observer in
             let request = URLRequest(url: url)
             URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
                 
                 // 앱이 꺼져 NetworkManager 가 메모리에서 해제된 경우
-                guard let self else {
+                guard self != nil else {
                     observer(.failure(NetworkManagerError.unknown))
                     return
                 }
@@ -74,7 +70,6 @@ extension NetworkManager {
                 
                 // 정상적인 데이터 반환
                 observer(.success(decodable))
-                self.cache[url] = decodable
             }.resume()
             
             return Disposables.create()
@@ -87,14 +82,18 @@ extension NetworkManager {
     ///
     /// - Parameter url: 요청 URL
     /// - Returns: Data 타입으로 응답 데이터를 담은 Single<Data> 객체
-    func fetchData(url: URL) -> Single<Data> {
+    func fetchImage(url: URL) -> Single<UIImage> {
         
-        if let single: Single<Data> = cacheData(url: url) {
+        if let image = imageCache.image(forKey: url) {
+            let single = Single<UIImage>.create { observer in
+                observer(.success(image))
+                return Disposables.create()
+            }
             return single
         }
         
         // 컴플리션을 통해 응답에 대한 observer를 실행시키는 Single 객체
-        let single = Single<Data>.create(subscribe: { observer in
+        let single = Single<UIImage>.create(subscribe: { observer in
             let request = URLRequest(url: url)
             URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
                 guard let self else {
@@ -120,12 +119,13 @@ extension NetworkManager {
                     return
                 }
                 
-                guard let data else {
+                guard let data,
+                      let image = UIImage(data: data) else {
                     observer(.failure(NetworkManagerError.unknown))
                     return }
                 
-                observer(.success(data))
-                self.cache[url] = data
+                observer(.success(image))
+                imageCache.setImage(image, forKey: url)
             }.resume()
             
             return Disposables.create()
@@ -133,34 +133,22 @@ extension NetworkManager {
         return single
     }
     
-    // 캐시 데이터가 존재할 경우, Single<T> 객체 반환
-    private func cacheData<T>(url: URL) -> Single<T>? {
-        guard let value = self.cache[url] as? T else { return nil }
+    private func cacheData(url: URL) -> Single<Data>? {
+        guard let data = UserDefaults.standard.data(forKey: cachingKey(url)) else { return nil }
         
-        let single = Single<T>.create(subscribe: { obserser in
-            obserser(.success(value))
+        let single = Single<Data>.create(subscribe: { observer in
+            observer(.success(data))
             return Disposables.create()
         })
         
         return single
     }
     
-}
-
-enum NetworkManagerError: Error, CustomStringConvertible {
-    
-    var description: String {
-        switch self {
-        case .invalidResponse(statusCode: let statusCode):
-            return "HTTP StatusCode Error - \(statusCode ?? 000)"
-        case .decodeFailed:
-            return "Decode Failed"
-        case .unknown:
-            return "Unknown Error"
-        }
+    private func saveData(url: URL, data: UIImage) {
+        UserDefaults.standard.set(data, forKey: cachingKey(url))
     }
     
-    case invalidResponse(statusCode: Int?)
-    case decodeFailed
-    case unknown
+    private func cachingKey(_ url: URL) -> String {
+        return "NetworkManager" + url.absoluteString
+    }
 }

@@ -5,7 +5,7 @@
 //  Created by t2023-m0072 on 12/29/24.
 //
 
-import Foundation
+import UIKit
 
 import RxSwift
 
@@ -29,9 +29,9 @@ final class PokemonAPIManager {
         return networkManager.fetch(url: url)
     }
     
-    func fetchPokemonImage(of id: Int) -> Single<Data>? {
+    func fetchPokemonImage(of id: Int) -> Single<UIImage>? {
         guard let url = PokeURLFormatter.image(of: id) else { return nil }
-        return networkManager.fetchData(url: url)
+        return networkManager.fetchImage(url: url)
     }
     
     func fetchNextPokemonList(_ pokemonList: PokemonList) -> Single<PokemonList>? {
@@ -40,6 +40,3 @@ final class PokemonAPIManager {
     }
     
 }
-
-
-

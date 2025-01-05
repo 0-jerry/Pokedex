@@ -20,13 +20,28 @@ struct PokeDetailsFormatter {
               let types = pokeDetails.types,
               let height = pokeDetails.height,
               let weight = pokeDetails.weight else { return nil }
-        
+
         let koreanName = PokemonTranslator.getKoreanName(for: name)
         let type = PokemonTypeName.format(types)
-        
+
         self.name = "No.\(id)  \(koreanName)"
         self.type = "타입: \(type)"
         self.height = "키: \(Double(height)/10) m"
         self.weight = "몸무게: \(Double(weight)/10) kg"
     }
+    
+    init(name: String,
+         type: String,
+         height: String,
+         weight: String) {
+        self.name = name
+        self.type = type
+        self.height = height
+        self.weight = weight
+    }
+    
+    static let `default` = PokeDetailsFormatter(name: "",
+                                                type: "",
+                                                height: "",
+                                                weight: "")
 }

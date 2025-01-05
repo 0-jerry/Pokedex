@@ -7,15 +7,16 @@
 
 import UIKit
 
+import RxSwift
 import SnapKit
 
 final class PokeCollectionViewCell: UICollectionViewCell {
-        
+    
     static let id = "PokeCollectionViewCell"
     
-    private var pokeCollectionViewCellModel: PokeCollectionViewCellModel?
+    private var disposeBag = DisposeBag()
     
-    private(set) var pokeID: Int?
+    private var pokeCollectionViewCellViewModel: PokeCollectionViewCellViewModel?
     
     private let pokeImageView: UIImageView = {
         let imageView = UIImageView()
@@ -28,7 +29,7 @@ final class PokeCollectionViewCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        reset()
+//        reset()
     }
     
     override init(frame: CGRect) {
@@ -45,12 +46,6 @@ final class PokeCollectionViewCell: UICollectionViewCell {
         pokeImageView.image = nil
     }
     
-    
-    func configurePokeID(_ pokeID: Int) {
-        self.pokeID = pokeID
-        pokeCollectionViewCellModel = PokeCollectionViewCellModel(pokeCollectionViewCell: self)
-    }
-    
     private func configureUI() {
         addSubview(pokeImageView)
         
@@ -61,14 +56,19 @@ final class PokeCollectionViewCell: UICollectionViewCell {
         self.layer.cornerRadius = 10
         self.clipsToBounds = true
     }
-        
+    
 }
 
 extension PokeCollectionViewCell {
     
-    func updateImage(by image: UIImage) {
-        DispatchQueue.main.async { [weak self] in
-            self?.pokeImageView.image = image
-        }
+    func configureViewModel(_ pokeCollectionViewCellViewModel: PokeCollectionViewCellViewModel) {
+        self.pokeCollectionViewCellViewModel = pokeCollectionViewCellViewModel
+        pokeCollectionViewCellViewModel.pokeImage.subscribe { [weak self] image in
+            DispatchQueue.main.async {
+                self?.pokeImageView.image = image
+            }
+        }.disposed(by: disposeBag)
+        
     }
+    
 }

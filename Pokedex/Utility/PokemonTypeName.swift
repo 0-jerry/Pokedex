@@ -57,4 +57,5 @@ enum PokemonTypeName: String, CaseIterable, Codable {
             .compactMap { PokemonTypeName(rawValue: $0)?.displayName }
             .joined(separator: ", ")
     }
+    
 }

@@ -7,27 +7,18 @@
 
 import UIKit
 
-import SnapKit
 import RxSwift
+import SnapKit
 
 final class MainViewController: UIViewController, ErrorAlertPresentable {
     
-    init() {
-        self.mainViewModel = MainViewModel()
-        super.init(nibName: nil, bundle: nil)
-        
-        bind()
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-        
     private let mainViewModel: MainViewModel
     
     private let disposeBag = DisposeBag()
     
     private var pokemons = [Pokemon]()
+    
+    private var scrollEnabled: Bool = true
     
     // 포켓몬 볼 이미지 뷰
     private let pokeBallImageView: UIImageView = {
@@ -60,13 +51,22 @@ final class MainViewController: UIViewController, ErrorAlertPresentable {
         return collectionView
     }()
     
+    init() {
+        self.mainViewModel = MainViewModel()
+        super.init(nibName: nil, bundle: nil)
+        
+        bind()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         configureUI()
         configureCollectionView()
-        //FIXME: -
-        mainViewModel.fetchPokeList()
     }
     
     private func configureUI() {
@@ -79,8 +79,8 @@ final class MainViewController: UIViewController, ErrorAlertPresentable {
         
         pokeBallImageView.snp.makeConstraints { imageView in
             imageView.centerX.equalToSuperview()
-            imageView.top.equalTo(view.safeAreaLayoutGuide).inset(20)
-            imageView.width.height.equalTo(120)
+            imageView.top.equalTo(view.safeAreaLayoutGuide)
+            imageView.width.height.equalTo(80)
         }
         
         collectionView.snp.makeConstraints { collectionView in
@@ -97,19 +97,32 @@ final class MainViewController: UIViewController, ErrorAlertPresentable {
         collectionView.delegate = self
     }
     
+}
+
+// MARK: - Rx
+
+extension MainViewController {
+    
     private func bind() {
         mainViewModel.pokemons
             .subscribe { [weak self] pokemons in
-            self?.configurePokemons(pokemons)
-        }.disposed(by: disposeBag)
+                self?.configurePokemons(pokemons)
+            }.disposed(by: disposeBag)
     }
     
     private func configurePokemons(_ pokemons: [Pokemon]) {
         self.pokemons += pokemons
+        
         DispatchQueue.main.async {
             self.collectionView.reloadData()
+            
+            DispatchQueue.global().async {
+                self.scrollEnabled = true
+            }
+            
         }
     }
+    
 }
 
 
@@ -124,9 +137,9 @@ extension MainViewController: UICollectionViewDataSource {
         
         guard let pokeCollectionViewCell = defaultCell as? PokeCollectionViewCell,
               let pokeID = pokemons[indexPath.item].id else { return defaultCell }
-        
-        //pokeCollectionViewCell - configure
-        pokeCollectionViewCell.configurePokeID(pokeID)
+
+        let cellViewModel = PokeCollectionViewCellViewModel(pokeID: pokeID)        
+        pokeCollectionViewCell.configureViewModel(cellViewModel)
         
         return pokeCollectionViewCell
     }
@@ -146,9 +159,12 @@ extension MainViewController: UICollectionViewDelegate {
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        guard scrollEnabled else { return }
+        
         if pokemons.count - 3 == indexPath.item {
-            //FIXME: -
-            mainViewModel.fetchPokeList()
+            scrollEnabled = false
+            mainViewModel.fetchNewPokeList()
         }
     }
+    
 }

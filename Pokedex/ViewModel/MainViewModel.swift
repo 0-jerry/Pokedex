@@ -12,37 +12,30 @@ import RxSwift
 final class MainViewModel {
     
     private let pokemonAPIManager = PokemonAPIManager.shared
+    private let disposeBag = DisposeBag()
     
-    private let pokemonsSubject = PublishSubject<[Pokemon]>()
+    private var pokemonList: PokemonList?
+        
+    private let pokemonsSubject = BehaviorSubject<[Pokemon]>(value: [])
     
     var pokemons: Observable<[Pokemon]> {
         return pokemonsSubject.asObservable()
     }
     
-    private var pokemonList: PokemonList?
-            
-    private let disposeBag = DisposeBag()
-    
-    init() {}
-    
-    func fetchPokeList() {
-        if pokemonList == nil {
-            fetchFirstPokeList()
-        } else {
-            fetchNewPokeList()
-        }
+    init() {
+        fetchFirstPokeList()
     }
     
     private func fetchFirstPokeList() {
         pokemonAPIManager
-            .fetchPokemonList(limit: 20, offset: 0)?
+            .fetchPokemonList(limit: 21, offset: 0)?
             .subscribe(onSuccess: { [weak self] pokemonList in
                 self?.publishPokemons(pokemonList)
             }
-            ).disposed(by: disposeBag)
+        ).disposed(by: disposeBag)
     }
     
-    private func fetchNewPokeList() {
+    func fetchNewPokeList() {
         guard let pokemonList else { return }
         pokemonAPIManager
             .fetchNextPokemonList(pokemonList)?

@@ -7,9 +7,7 @@
 
 import UIKit
 
-protocol ErrorAlertPresentable: UIViewController {
-    
-}
+protocol ErrorAlertPresentable: UIViewController {}
 
 extension ErrorAlertPresentable {
     
@@ -22,11 +20,12 @@ extension ErrorAlertPresentable {
                                                 preferredStyle: .alert)
         
         let cancelAction = UIAlertAction(title: "retry", style: .default)
-
+        
         alertController.addAction(cancelAction)
         DispatchQueue.main.async {
             self.navigationController?.present(alertController, animated: true)
         }
         completion?()
     }
+    
 }

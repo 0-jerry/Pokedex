@@ -8,12 +8,15 @@
 import UIKit
 
 import RxSwift
+import RxCocoa
 import SnapKit
 
 final class DetailViewController: UIViewController, ErrorAlertPresentable {
     
-    private let disposeBag = DisposeBag()
+    private static let nameFont = UIFont.systemFont(ofSize: 28, weight: .bold)
+    private static let littleFont = UIFont.systemFont(ofSize: 20, weight: .semibold)
     
+    private let disposeBag = DisposeBag()
     private let detailsViewModel: DetailViewModel
     
     private let stackView: UIStackView = {
@@ -39,23 +42,10 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
         return imageView
     }()
     
-    private let nameLabel: UILabel = {
-        let label = UILabel()
-        
-        label.font = .systemFont(ofSize: 28, weight: .bold)
-        label.textColor = .white
-        label.textAlignment = .center
-        label.numberOfLines = 1
-        
-        return label
-    }()
-    
-    private let typeLabel: UILabel = littleLabel()
-    
-    private let weightLabel: UILabel = littleLabel()
-    
-    private let heightLabel: UILabel = littleLabel()
-    
+    private let nameLabel: UILabel = detailsLabel(nameFont)
+    private let typeLabel: UILabel = detailsLabel(littleFont)
+    private let weightLabel: UILabel = detailsLabel(littleFont)
+    private let heightLabel: UILabel = detailsLabel(littleFont)
     private let emptyView: UIView = UIView()
     
     init(detailsViewModel: DetailViewModel) {
@@ -73,8 +63,6 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
         super.viewDidLoad()
         
         configureUI()
-        // FIXME: -
-        detailsViewModel.publish()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -83,24 +71,12 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
         self.navigationController?.navigationBar.isHidden = false
     }
     
-    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
         self.navigationController?.navigationBar.isHidden = true
     }
     
-    private func bind() {
-        detailsViewModel.pokeDetails
-            .subscribe { [weak self] pokeDetailsFormmater in
-                self?.updateLabel(by: pokeDetailsFormmater)
-            }.disposed(by: disposeBag)
-        
-        detailsViewModel.pokeImage
-            .subscribe { [weak self] image in
-                self?.updateImage(by: image)
-            }.disposed(by: disposeBag)
-    }
     
     private func configureUI() {
         
@@ -145,10 +121,10 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
         
     }
     
-    private static func littleLabel() -> UILabel {
+    private static func detailsLabel(_ font: UIFont) -> UILabel {
         let label = UILabel()
         
-        label.font = .systemFont(ofSize: 20, weight: .semibold)
+        label.font = font
         label.textColor = .white
         label.numberOfLines = 1
         label.backgroundColor = .clear
@@ -157,18 +133,43 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
         return label
     }
     
-    func updateImage(by image: UIImage) {
-        DispatchQueue.main.async {
-            self.pokeImageView.image = image
-        }
+}
+
+// MARK: - bind
+
+extension DetailViewController {
+    
+    private func bind() {
+        [
+            detailsViewModel.pokeDetails
+                .map { $0.name }
+                .bind(to: nameLabel.rx.text),
+            detailsViewModel.pokeDetails
+                .map { $0.type }
+                .bind(to: typeLabel.rx.text),
+            detailsViewModel.pokeDetails
+                .map { $0.weight }
+                .bind(to: weightLabel.rx.text),
+            detailsViewModel.pokeDetails
+                .map { $0.height }
+                .bind(to: heightLabel.rx.text),
+            detailsViewModel.pokeImage
+                .subscribe { [weak self] image in
+                    self?.updateImage(by: image) }
+        ].forEach { $0.disposed(by: disposeBag) }
+
     }
     
-    func updateLabel(by pokeDetailsFormatter: PokeDetailsFormatter) {
+}
+
+// MARK: - UI Update
+
+extension DetailViewController {
+    
+    private func updateImage(by image: UIImage) {
+            
         DispatchQueue.main.async {
-            self.nameLabel.text = pokeDetailsFormatter.name
-            self.typeLabel.text = pokeDetailsFormatter.type
-            self.heightLabel.text = pokeDetailsFormatter.height
-            self.weightLabel.text = pokeDetailsFormatter.weight
+            self.pokeImageView.image = image
         }
     }
     
