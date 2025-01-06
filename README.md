@@ -6,6 +6,8 @@
 [포켓몬 API](https://pokeapi.co/)를 활용한 iOS 포켓몬 도감 애플리케이션입니다.   
 사용자는 포켓몬 목록을 확인하고 각 포켓몬의 상세 정보를 볼 수 있습니다.
 
+![Simulator Screen Recording - iPhone 16 Pro - 2025-01-06 at 10 16 09](https://github.com/user-attachments/assets/5ff0eb53-5417-4aee-9ab3-7714a2949456)
+
 </br>
 
 ## 주요 기능
