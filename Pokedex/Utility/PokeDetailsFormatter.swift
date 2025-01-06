@@ -20,10 +20,10 @@ struct PokeDetailsFormatter {
               let types = pokeDetails.types,
               let height = pokeDetails.height,
               let weight = pokeDetails.weight else { return nil }
-
+        
         let koreanName = PokemonTranslator.getKoreanName(for: name)
         let type = PokemonTypeName.format(types)
-
+        
         self.name = "No.\(id)  \(koreanName)"
         self.type = "타입: \(type)"
         self.height = "키: \(Double(height)/10) m"
@@ -40,8 +40,4 @@ struct PokeDetailsFormatter {
         self.weight = weight
     }
     
-    static let `default` = PokeDetailsFormatter(name: "",
-                                                type: "",
-                                                height: "",
-                                                weight: "")
 }

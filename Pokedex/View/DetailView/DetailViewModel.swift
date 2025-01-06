@@ -18,11 +18,10 @@ final class DetailViewModel {
     private let pokeDetailsSubject = BehaviorSubject<PokeDetailsFormatter?>(value: nil)
     
     private let pokeImageSubject = BehaviorSubject<UIImage?>(value: nil)
-
+    
     init() {
         self.pokeAPIManager = PokemonAPIManager.shared
     }
-    
     
     private func fetchPokeDetails(_ pokeID: Int) {
         pokeAPIManager
@@ -61,14 +60,17 @@ extension DetailViewModel {
         
         let pokeDetailsFormatter = pokeDetailsSubject.asObservable()
         let pokeImage = pokeImageSubject.asObservable()
-        let output = Output(pokeDetailsFormatter: pokeDetailsFormatter, pokeImage: pokeImage)
+        let output = Output(pokeDetailsFormatter: pokeDetailsFormatter,
+                            pokeImage: pokeImage)
         
-        input.pokeID.subscribe(onNext: { [weak self] pokeID in
-            guard let pokeID else { return }
-            self?.fetchPokeDetails(pokeID)
-            self?.fetchPokeImage(pokeID)
-        }).disposed(by: disposeBag)
+        input.pokeID
+            .subscribe(onNext: { [weak self] pokeID in
+                guard let pokeID else { return }
+                self?.fetchPokeDetails(pokeID)
+                self?.fetchPokeImage(pokeID)
+            }).disposed(by: disposeBag)
         
         return output
     }
+    
 }

@@ -17,7 +17,7 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
     private static let littleFont = UIFont.systemFont(ofSize: 20, weight: .semibold)
     
     private let disposeBag = DisposeBag()
-    private let detailsViewModel = DetailViewModel()
+    private let viewModel = DetailViewModel()
     private let pokeIDSubject = BehaviorSubject<Int?>(value: nil)
     
     private let stackView: UIStackView = {
@@ -147,9 +147,12 @@ extension DetailViewController {
         let pokeID = pokeIDSubject.asObservable()
         let input = DetailViewModel.Input(pokeID: pokeID)
         
-        let output = detailsViewModel.transform(input)
-        let pokeDetailsFormatter = output.pokeDetailsFormatter.compactMap { $0 }
-
+        let output = viewModel.transform(input)
+        let pokeDetailsFormatter = output.pokeDetailsFormatter
+            .compactMap { $0 }
+            .observe(on: MainScheduler.instance)
+        
+        
         [
             pokeDetailsFormatter
                 .map { $0.name }
@@ -161,17 +164,15 @@ extension DetailViewController {
                 .map { $0.weight }
                 .bind(to: weightLabel.rx.text),
             pokeDetailsFormatter
-                .map { $0.height}
+                .map { $0.height }
                 .bind(to: heightLabel.rx.text)
         ].forEach { $0.disposed(by: disposeBag) }
         
         output.pokeImage
-            .subscribe(onNext: { [weak self] image in
-                guard let image else { return }
-                DispatchQueue.main.async {
-                    self?.pokeImageView.image = image
-                }
-            }).disposed(by: disposeBag)
+            .compactMap { $0 }
+            .observe(on: MainScheduler.instance)
+            .bind(to: pokeImageView.rx.image)
+            .disposed(by: disposeBag)
     }
     
 }

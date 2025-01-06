@@ -10,7 +10,7 @@ import Foundation
 final class DataCache {
     
     static let shared = DataCache()
-        
+    
     private init() {}
     
     private var cache: [String: Data] = [:]

@@ -12,7 +12,7 @@ import SnapKit
 
 final class MainViewController: UIViewController, ErrorAlertPresentable {
     
-    private let mainViewModel: MainViewModel
+    private let viewModel: MainViewModel
     
     private let disposeBag = DisposeBag()
     
@@ -54,7 +54,7 @@ final class MainViewController: UIViewController, ErrorAlertPresentable {
     }()
     
     init() {
-        self.mainViewModel = MainViewModel()
+        self.viewModel = MainViewModel()
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -93,7 +93,7 @@ final class MainViewController: UIViewController, ErrorAlertPresentable {
     }
     
     private func configureCollectionView() {
-        collectionView.register(PokeCollectionViewCell.self, forCellWithReuseIdentifier: PokeCollectionViewCell.id)
+        collectionView.register(PokeCell.self, forCellWithReuseIdentifier: PokeCell.id)
         collectionView.dataSource = self
         collectionView.delegate = self
     }
@@ -114,11 +114,11 @@ extension MainViewController {
         let input = MainViewModel.Input(viewDidLoad: viewDidLoad,
                                         scrollEndpoint: scrollEndPoint)
         
-        let output = mainViewModel.transform(input)
+        let output = viewModel.transform(input)
         
         output.pokemons
             .subscribe(onNext: { [weak self] pokemons in
-            self?.configurePokemons(pokemons)
+                self?.configurePokemons(pokemons)
             }).disposed(by: disposeBag)
     }
     
@@ -145,14 +145,14 @@ extension MainViewController: UICollectionViewDataSource {
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let defaultCell = collectionView.dequeueReusableCell(withReuseIdentifier: PokeCollectionViewCell.id, for: indexPath)
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PokeCell.id, for: indexPath)
         
-        guard let pokeCollectionViewCell = defaultCell as? PokeCollectionViewCell,
-              let pokeID = pokemons[indexPath.item].id else { return defaultCell }
-
-        pokeCollectionViewCell.configurePokeID(pokeID)
+        guard let pokeCell = cell as? PokeCell,
+              let pokeID = pokemons[indexPath.item].id else { return cell }
         
-        return pokeCollectionViewCell
+        pokeCell.configurePokeID(pokeID)
+        
+        return pokeCell
     }
     
 }
@@ -172,7 +172,7 @@ extension MainViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         guard scrollEnabled else { return }
         
-        if pokemons.count - 3 == indexPath.item {
+        if pokemons.count - 1 == indexPath.item {
             scrollEnabled = false
             scrollEndPoint.onNext(())
         }

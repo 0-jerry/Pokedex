@@ -20,7 +20,7 @@ final class NetworkCache {
     private func key(_ url: URL) -> String {
         "NetworkManagerDataCache" + url.absoluteString
     }
-
+    
     func data(forKey url: URL) -> Data? {
         dataCache.data(forKey: key(url))
     }

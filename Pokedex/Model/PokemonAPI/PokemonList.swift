@@ -19,5 +19,6 @@ struct PokemonList: Decodable {
         case next
         case previous
     }
+    
 }
 

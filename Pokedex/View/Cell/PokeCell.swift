@@ -10,15 +10,15 @@ import UIKit
 import RxSwift
 import SnapKit
 
-final class PokeCollectionViewCell: UICollectionViewCell {
+final class PokeCell: UICollectionViewCell {
     
-    static let id = "PokeCollectionViewCell"
+    static let id = "PokeCell"
     
     private var disposeBag = DisposeBag()
     
     private let pokeIDSubject = BehaviorSubject<Int?>(value: nil)
     
-    private let pokeCollectionViewCellViewModel = PokeCollectionViewCellViewModel()
+    private let viewModel = PokeCellViewModel()
     
     private let pokeImageView: UIImageView = {
         let imageView = UIImageView()
@@ -67,19 +67,17 @@ final class PokeCollectionViewCell: UICollectionViewCell {
     }
 }
 
-extension PokeCollectionViewCell {
+extension PokeCell {
     
     private func bind() {
         let pokeID = pokeIDSubject.asObservable()
-        let input = PokeCollectionViewCellViewModel.Input(pokeID: pokeID)
-        let output = pokeCollectionViewCellViewModel.transForm(input)
+        let input = PokeCellViewModel.Input(pokeID: pokeID)
+        let output = viewModel.transForm(input)
         
-        output.pokeImage.subscribe(onNext: { [weak self] image in
-            guard let image else { return }
-            DispatchQueue.main.async {
-                self?.pokeImageView.image = image
-            }
-        }).disposed(by: disposeBag)
+        output.pokeImage
+            .observe(on: MainScheduler.instance)
+            .bind(to: pokeImageView.rx.image)
+            .disposed(by: disposeBag)
     }
     
 }

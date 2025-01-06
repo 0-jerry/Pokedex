@@ -9,12 +9,12 @@ import UIKit
 
 import RxSwift
 
-final class PokeCollectionViewCellViewModel {
+final class PokeCellViewModel {
     
     private let disposeBag = DisposeBag()
     
     private var requestDisposeBag = DisposeBag()
-        
+    
     private let pokeAPIManager = PokemonAPIManager.shared
     
     private let pokeImagePublisher = BehaviorSubject<UIImage?>(value: nil)
@@ -27,9 +27,10 @@ final class PokeCollectionViewCellViewModel {
                 self?.pokeImagePublisher.onNext(image)
             }).disposed(by: requestDisposeBag)
     }
+    
 }
 
-extension PokeCollectionViewCellViewModel {
+extension PokeCellViewModel {
     
     struct Input {
         let pokeID: Observable<Int?>

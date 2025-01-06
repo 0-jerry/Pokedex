@@ -9,7 +9,7 @@ import Foundation
 
 /// 영어 포켓몬 이름을 한국어로 변환하는 매니저
 enum PokemonTranslator {
-
+    
     /// 영어 이름을 한국어로 변환
     /// - Parameter englishName: 포켓몬의 영어 이름
     /// - Returns: 한국어 이름. 지원하지 않는 이름의 경우 `nil`
@@ -18,7 +18,7 @@ enum PokemonTranslator {
         
         return koreanName
     }
-
+    
     // 영어 이름과 한국어 이름 매핑 테이블
     private static let koreanNames: [String: String] = [
         "bulbasaur": "이상해씨",

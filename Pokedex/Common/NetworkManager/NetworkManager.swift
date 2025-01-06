@@ -117,7 +117,7 @@ extension NetworkManager {
         
         return image
     }
-        
+    
     private func cacheSingleValue<T: Decodable>(_ url: URL) -> Single<T>? {
         guard let data = cache.data(forKey: url),
               let value = try? JSONDecoder().decode(T.self, from: data) else { return nil }

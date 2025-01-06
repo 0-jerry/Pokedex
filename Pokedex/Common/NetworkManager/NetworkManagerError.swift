@@ -19,7 +19,7 @@ enum NetworkManagerError: Error, CustomStringConvertible {
             return "Invalid Data"
         case .unknown:
             return "Unknown Error"
-
+            
         }
     }
     

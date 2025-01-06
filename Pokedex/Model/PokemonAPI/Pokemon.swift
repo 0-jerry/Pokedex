@@ -19,7 +19,7 @@ struct Pokemon: Decodable {
             .split(separator: "/")
             .compactMap({ Int($0) })
             .last else { return nil }
-
+        
         return pokeID
     }
     

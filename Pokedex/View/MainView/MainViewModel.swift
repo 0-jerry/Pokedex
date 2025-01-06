@@ -15,7 +15,7 @@ final class MainViewModel {
     private let disposeBag = DisposeBag()
     
     private var pokemonList: PokemonList?
-        
+    
     private let pokemonsSubject = BehaviorSubject<[Pokemon]>(value: [])
     
     private func fetchFirstPokeList() {
@@ -24,7 +24,7 @@ final class MainViewModel {
             .subscribe(onSuccess: { [weak self] pokemonList in
                 self?.publishPokemons(pokemonList)
             }
-        ).disposed(by: disposeBag)
+            ).disposed(by: disposeBag)
     }
     
     private func fetchNewPokeList() {
@@ -61,7 +61,7 @@ extension MainViewModel {
     
     func transform(_ input: Input) -> Output {
         let pokemons = pokemonsSubject.asObservable()
-                
+        
         input.viewDidLoad
             .subscribe(onSuccess: { [weak self] in
                 self?.fetchFirstPokeList()
@@ -75,4 +75,5 @@ extension MainViewModel {
         
         return Output(pokemons: pokemons)
     }
+    
 }
