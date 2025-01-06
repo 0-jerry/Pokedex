@@ -9,7 +9,7 @@ import Foundation
 
 import RxSwift
 
-struct SingleFormatter {
+struct SingleTranslator {
     
     static func single<T>(_ value: T) -> Single<T> {
         let single = Single<T>.create { observer in
@@ -19,4 +19,5 @@ struct SingleFormatter {
         
         return single
     }
+    
 }

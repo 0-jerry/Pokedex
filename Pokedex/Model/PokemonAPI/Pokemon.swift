@@ -13,7 +13,6 @@ struct Pokemon: Decodable {
     let name: String?
     let url: String?
     
-    // FIXME: - 적합한 형태는 아닌 것 같다.
     var id: Int? {
         guard let url,
               let pokeID = url

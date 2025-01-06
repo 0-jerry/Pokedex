@@ -17,10 +17,13 @@ enum NetworkManagerError: Error, CustomStringConvertible {
             return "Decode Failed"
         case .unknown:
             return "Unknown Error"
+        case .invalidData:
+            return "Invalid Data"
         }
     }
     
     case invalidResponse(statusCode: Int?)
     case decodeFailed
     case unknown
+    case invalidData
 }

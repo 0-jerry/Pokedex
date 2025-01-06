@@ -17,7 +17,7 @@ final class DetailViewModel {
     
     private let pokeDetailsSubject = BehaviorSubject<PokeDetailsFormatter>(value: .default)
     
-    private let pokeImageSubject = BehaviorSubject<UIImage>(value: .pokeBall)
+    private let pokeImageSubject = BehaviorSubject<UIImage?>(value: nil)
     
     private let pokeIDSubject: BehaviorSubject<Int>
     
@@ -29,7 +29,7 @@ final class DetailViewModel {
         return pokeDetailsSubject.asObservable()
     }
     
-    var pokeImage: Observable<UIImage> {
+    var pokeImage: Observable<UIImage?> {
         return pokeImageSubject.asObservable()
     }
     

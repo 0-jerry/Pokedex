@@ -155,6 +155,7 @@ extension DetailViewController {
                 .bind(to: heightLabel.rx.text),
             detailsViewModel.pokeImage
                 .subscribe { [weak self] image in
+                    guard let image else { return }
                     self?.updateImage(by: image) }
         ].forEach { $0.disposed(by: disposeBag) }
 

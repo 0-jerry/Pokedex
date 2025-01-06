@@ -17,9 +17,9 @@ final class PokeCollectionViewCellViewModel {
     
     private let pokeAPIManager = PokemonAPIManager.shared
     
-    private let pokeImagePublisher = BehaviorSubject<UIImage>(value: .pokeBall)
+    private let pokeImagePublisher = BehaviorSubject<UIImage?>(value: nil)
     
-    var pokeImage: Observable<UIImage> {
+    var pokeImage: Observable<UIImage?> {
         pokeImagePublisher.asObservable()
     }
         

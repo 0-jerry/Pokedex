@@ -5,10 +5,9 @@
 //  Created by t2023-m0072 on 1/5/25.
 //
 
+import Foundation
 
-import UIKit
-
-class DataCache {
+final class DataCache {
     
     static let shared = DataCache()
         

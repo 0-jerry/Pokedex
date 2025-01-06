@@ -15,11 +15,3 @@ struct PokemonType: Decodable {
     var english: String? { type?.name }
 
 }
-
-/// 
-struct NamedAPIResource: Decodable {
-    
-    let name: String
-    let url: String
-    
-}
