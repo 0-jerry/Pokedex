@@ -24,12 +24,12 @@ final class PokemonAPIManager {
         return networkManager.fetch(url: url)
     }
     
-    func fetchPokemonDetails(of id: Int) -> Single<PokemonDetails>? {
+    func fetchPokemonDetails(of id: PokeID) -> Single<PokemonDetails>? {
         guard let url = PokeURLFormatter.detail(of: id) else { return nil }
         return networkManager.fetch(url: url)
     }
     
-    func fetchPokemonImage(of id: Int) -> Single<UIImage>? {
+    func fetchPokemonImage(of id: PokeID) -> Single<UIImage>? {
         guard let url = PokeURLFormatter.image(of: id) else { return nil }
         return networkManager.fetchImage(url: url)
     }

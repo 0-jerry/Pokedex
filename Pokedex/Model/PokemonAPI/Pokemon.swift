@@ -13,7 +13,7 @@ struct Pokemon: Decodable {
     let name: String?
     let url: String?
     
-    var id: Int? {
+    var id: PokeID? {
         guard let url,
               let pokeID = url
             .split(separator: "/")
@@ -24,3 +24,5 @@ struct Pokemon: Decodable {
     }
     
 }
+
+typealias PokeID = Int

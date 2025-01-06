@@ -16,7 +16,7 @@ final class PokeCell: UICollectionViewCell {
     
     private var disposeBag = DisposeBag()
     
-    private let pokeIDSubject = BehaviorSubject<Int?>(value: nil)
+    private let pokeIDSubject = BehaviorSubject<PokeID?>(value: nil)
     
     private let viewModel = PokeCellViewModel()
     
@@ -62,7 +62,7 @@ final class PokeCell: UICollectionViewCell {
         self.clipsToBounds = true
     }
     
-    func configurePokeID(_ pokeID: Int) {
+    func configurePokeID(_ pokeID: PokeID) {
         self.pokeIDSubject.onNext(pokeID)
     }
 }

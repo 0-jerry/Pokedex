@@ -18,7 +18,7 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
     
     private let disposeBag = DisposeBag()
     private let viewModel = DetailViewModel()
-    private let pokeIDSubject = BehaviorSubject<Int?>(value: nil)
+    private let pokeIDSubject = BehaviorSubject<PokeID?>(value: nil)
     
     private let stackView: UIStackView = {
         let stackView = UIStackView()
@@ -181,7 +181,7 @@ extension DetailViewController {
 
 extension DetailViewController {
     
-    func configurePokeID(_ pokeID: Int) {
+    func configurePokeID(_ pokeID: PokeID) {
         self.pokeIDSubject.onNext(pokeID)
     }
 }

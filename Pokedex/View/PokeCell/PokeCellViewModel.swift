@@ -19,7 +19,7 @@ final class PokeCellViewModel {
     
     private let pokeImagePublisher = BehaviorSubject<UIImage?>(value: nil)
     
-    private func fetchImage(_ pokeID: Int) {
+    private func fetchImage(_ pokeID: PokeID) {
         requestDisposeBag = DisposeBag()
         
         pokeAPIManager.fetchPokemonImage(of: pokeID)?
@@ -33,7 +33,7 @@ final class PokeCellViewModel {
 extension PokeCellViewModel {
     
     struct Input {
-        let pokeID: Observable<Int?>
+        let pokeID: Observable<PokeID?>
     }
     
     struct Output {

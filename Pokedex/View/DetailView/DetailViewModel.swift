@@ -23,7 +23,7 @@ final class DetailViewModel {
         self.pokeAPIManager = PokemonAPIManager.shared
     }
     
-    private func fetchPokeDetails(_ pokeID: Int) {
+    private func fetchPokeDetails(_ pokeID: PokeID) {
         pokeAPIManager
             .fetchPokemonDetails(of: pokeID)?
             .compactMap { PokeDetailsFormatter($0) }
@@ -34,7 +34,7 @@ final class DetailViewModel {
             ).disposed(by: disposeBag)
     }
     
-    private func fetchPokeImage(_ pokeID: Int) {
+    private func fetchPokeImage(_ pokeID: PokeID) {
         pokeAPIManager
             .fetchPokemonImage(of: pokeID)?
             .subscribe(
@@ -48,7 +48,7 @@ final class DetailViewModel {
 extension DetailViewModel {
     
     struct Input {
-        let pokeID: Observable<Int?>
+        let pokeID: Observable<PokeID?>
     }
     
     struct Output {
