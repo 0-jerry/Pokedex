@@ -20,6 +20,8 @@ final class MainViewController: UIViewController, ErrorAlertPresentable {
     
     private var scrollEnabled: Bool = true
     
+    private let scrollEndPoint = PublishSubject<Void>()
+    
     // 포켓몬 볼 이미지 뷰
     private let pokeBallImageView: UIImageView = {
         let imageView = UIImageView()
@@ -54,8 +56,6 @@ final class MainViewController: UIViewController, ErrorAlertPresentable {
     init() {
         self.mainViewModel = MainViewModel()
         super.init(nibName: nil, bundle: nil)
-        
-        bind()
     }
     
     required init?(coder: NSCoder) {
@@ -67,6 +67,7 @@ final class MainViewController: UIViewController, ErrorAlertPresentable {
         
         configureUI()
         configureCollectionView()
+        bind()
     }
     
     private func configureUI() {
@@ -104,10 +105,21 @@ final class MainViewController: UIViewController, ErrorAlertPresentable {
 extension MainViewController {
     
     private func bind() {
-        mainViewModel.pokemons
-            .subscribe { [weak self] pokemons in
-                self?.configurePokemons(pokemons)
-            }.disposed(by: disposeBag)
+        let viewDidLoad = Single<Void>.create { observer in
+            observer(.success(()))
+            return Disposables.create()
+        }
+        let scrollEndPoint = scrollEndPoint.asObserver()
+        
+        let input = MainViewModel.Input(viewDidLoad: viewDidLoad,
+                                        scrollEndpoint: scrollEndPoint)
+        
+        let output = mainViewModel.transform(input)
+        
+        output.pokemons
+            .subscribe(onNext: { [weak self] pokemons in
+            self?.configurePokemons(pokemons)
+            }).disposed(by: disposeBag)
     }
     
     private func configurePokemons(_ pokemons: [Pokemon]) {
@@ -138,8 +150,7 @@ extension MainViewController: UICollectionViewDataSource {
         guard let pokeCollectionViewCell = defaultCell as? PokeCollectionViewCell,
               let pokeID = pokemons[indexPath.item].id else { return defaultCell }
 
-        let cellViewModel = PokeCollectionViewCellViewModel(pokeID: pokeID)        
-        pokeCollectionViewCell.configureViewModel(cellViewModel)
+        pokeCollectionViewCell.configurePokeID(pokeID)
         
         return pokeCollectionViewCell
     }
@@ -152,8 +163,8 @@ extension MainViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let pokeID = pokemons[indexPath.item].id else { return }
         
-        let detailViewModel = DetailViewModel(pokeID: pokeID)
-        let detailViewController = DetailViewController(detailsViewModel: detailViewModel)
+        let detailViewController = DetailViewController()
+        detailViewController.configurePokeID(pokeID)
         
         self.navigationController?.pushViewController(detailViewController, animated: true)
     }
@@ -163,7 +174,7 @@ extension MainViewController: UICollectionViewDelegate {
         
         if pokemons.count - 3 == indexPath.item {
             scrollEnabled = false
-            mainViewModel.fetchNewPokeList()
+            scrollEndPoint.onNext(())
         }
     }
     

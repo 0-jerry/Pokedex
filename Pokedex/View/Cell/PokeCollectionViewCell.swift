@@ -16,7 +16,9 @@ final class PokeCollectionViewCell: UICollectionViewCell {
     
     private var disposeBag = DisposeBag()
     
-    private var pokeCollectionViewCellViewModel: PokeCollectionViewCellViewModel?
+    private let pokeIDSubject = BehaviorSubject<Int?>(value: nil)
+    
+    private let pokeCollectionViewCellViewModel = PokeCollectionViewCellViewModel()
     
     private let pokeImageView: UIImageView = {
         let imageView = UIImageView()
@@ -34,8 +36,8 @@ final class PokeCollectionViewCell: UICollectionViewCell {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        backgroundColor = .cellBackground
         configureUI()
+        bind()
     }
     
     required init?(coder: NSCoder) {
@@ -47,6 +49,9 @@ final class PokeCollectionViewCell: UICollectionViewCell {
     }
     
     private func configureUI() {
+        
+        backgroundColor = .cellBackground
+        
         addSubview(pokeImageView)
         
         pokeImageView.snp.makeConstraints {
@@ -57,18 +62,24 @@ final class PokeCollectionViewCell: UICollectionViewCell {
         self.clipsToBounds = true
     }
     
+    func configurePokeID(_ pokeID: Int) {
+        self.pokeIDSubject.onNext(pokeID)
+    }
 }
 
 extension PokeCollectionViewCell {
     
-    func configureViewModel(_ pokeCollectionViewCellViewModel: PokeCollectionViewCellViewModel) {
-        self.pokeCollectionViewCellViewModel = pokeCollectionViewCellViewModel
-        pokeCollectionViewCellViewModel.pokeImage.subscribe { [weak self] image in
+    private func bind() {
+        let pokeID = pokeIDSubject.asObservable()
+        let input = PokeCollectionViewCellViewModel.Input(pokeID: pokeID)
+        let output = pokeCollectionViewCellViewModel.transForm(input)
+        
+        output.pokeImage.subscribe(onNext: { [weak self] image in
+            guard let image else { return }
             DispatchQueue.main.async {
                 self?.pokeImageView.image = image
             }
-        }.disposed(by: disposeBag)
-        
+        }).disposed(by: disposeBag)
     }
     
 }

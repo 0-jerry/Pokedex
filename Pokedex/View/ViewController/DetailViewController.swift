@@ -17,7 +17,8 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
     private static let littleFont = UIFont.systemFont(ofSize: 20, weight: .semibold)
     
     private let disposeBag = DisposeBag()
-    private let detailsViewModel: DetailViewModel
+    private let detailsViewModel = DetailViewModel()
+    private let pokeIDSubject = BehaviorSubject<Int?>(value: nil)
     
     private let stackView: UIStackView = {
         let stackView = UIStackView()
@@ -48,8 +49,7 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
     private let heightLabel: UILabel = detailsLabel(littleFont)
     private let emptyView: UIView = UIView()
     
-    init(detailsViewModel: DetailViewModel) {
-        self.detailsViewModel = detailsViewModel
+    init() {
         super.init(nibName: nil, bundle: nil)
         
         bind()
@@ -104,19 +104,23 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
         
         nameLabel.snp.makeConstraints { label in
             label.height.equalTo(50)
-            label.leading.trailing.equalToSuperview().inset(30)
+            label.leading.trailing.equalToSuperview().inset(15)
         }
         
-        [
-            typeLabel,
-            weightLabel,
-            heightLabel,
-            emptyView
-        ].forEach {
-            $0.snp.makeConstraints { view in
-                view.height.equalTo(30)
-                view.leading.trailing.equalToSuperview().inset(30)
-            }
+        typeLabel.snp.makeConstraints { label in
+            label.leading.trailing.equalToSuperview().inset(15)
+        }
+        
+        weightLabel.snp.makeConstraints { label in
+            label.leading.trailing.equalToSuperview().inset(15)
+        }
+        
+        heightLabel.snp.makeConstraints { label in
+            label.leading.trailing.equalToSuperview().inset(15)
+        }
+        
+        emptyView.snp.makeConstraints { view in
+            view.height.equalTo(30)
         }
         
     }
@@ -140,25 +144,34 @@ final class DetailViewController: UIViewController, ErrorAlertPresentable {
 extension DetailViewController {
     
     private func bind() {
+        let pokeID = pokeIDSubject.asObservable()
+        let input = DetailViewModel.Input(pokeID: pokeID)
+        
+        let output = detailsViewModel.transform(input)
+        let pokeDetailsFormatter = output.pokeDetailsFormatter.compactMap { $0 }
+
         [
-            detailsViewModel.pokeDetails
+            pokeDetailsFormatter
                 .map { $0.name }
                 .bind(to: nameLabel.rx.text),
-            detailsViewModel.pokeDetails
+            pokeDetailsFormatter
                 .map { $0.type }
                 .bind(to: typeLabel.rx.text),
-            detailsViewModel.pokeDetails
+            pokeDetailsFormatter
                 .map { $0.weight }
                 .bind(to: weightLabel.rx.text),
-            detailsViewModel.pokeDetails
-                .map { $0.height }
-                .bind(to: heightLabel.rx.text),
-            detailsViewModel.pokeImage
-                .subscribe { [weak self] image in
-                    guard let image else { return }
-                    self?.updateImage(by: image) }
+            pokeDetailsFormatter
+                .map { $0.height}
+                .bind(to: heightLabel.rx.text)
         ].forEach { $0.disposed(by: disposeBag) }
-
+        
+        output.pokeImage
+            .subscribe(onNext: { [weak self] image in
+                guard let image else { return }
+                DispatchQueue.main.async {
+                    self?.pokeImageView.image = image
+                }
+            }).disposed(by: disposeBag)
     }
     
 }
@@ -167,11 +180,7 @@ extension DetailViewController {
 
 extension DetailViewController {
     
-    private func updateImage(by image: UIImage) {
-            
-        DispatchQueue.main.async {
-            self.pokeImageView.image = image
-        }
+    func configurePokeID(_ pokeID: Int) {
+        self.pokeIDSubject.onNext(pokeID)
     }
-    
 }

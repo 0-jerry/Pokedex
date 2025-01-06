@@ -5,7 +5,7 @@
 //  Created by t2023-m0072 on 1/2/25.
 //
 
-import Foundation
+import UIKit
 
 import RxSwift
 
@@ -18,14 +18,6 @@ final class MainViewModel {
         
     private let pokemonsSubject = BehaviorSubject<[Pokemon]>(value: [])
     
-    var pokemons: Observable<[Pokemon]> {
-        return pokemonsSubject.asObservable()
-    }
-    
-    init() {
-        fetchFirstPokeList()
-    }
-    
     private func fetchFirstPokeList() {
         pokemonAPIManager
             .fetchPokemonList(limit: 21, offset: 0)?
@@ -35,7 +27,7 @@ final class MainViewModel {
         ).disposed(by: disposeBag)
     }
     
-    func fetchNewPokeList() {
+    private func fetchNewPokeList() {
         guard let pokemonList else { return }
         pokemonAPIManager
             .fetchNextPokemonList(pokemonList)?
@@ -54,4 +46,33 @@ final class MainViewModel {
         }
     }
     
+}
+
+extension MainViewModel {
+    
+    struct Input {
+        let viewDidLoad: Single<Void>
+        let scrollEndpoint: Observable<Void>
+    }
+    
+    struct Output {
+        let pokemons: Observable<[Pokemon]>
+    }
+    
+    func transform(_ input: Input) -> Output {
+        let pokemons = pokemonsSubject.asObservable()
+                
+        input.viewDidLoad
+            .subscribe(onSuccess: { [weak self] in
+                self?.fetchFirstPokeList()
+            }).disposed(by: disposeBag)
+        
+        input.scrollEndpoint
+            .withUnretained(self)
+            .subscribe(onNext: { [weak self] _ in
+                self?.fetchNewPokeList()
+            }).disposed(by: disposeBag)
+        
+        return Output(pokemons: pokemons)
+    }
 }

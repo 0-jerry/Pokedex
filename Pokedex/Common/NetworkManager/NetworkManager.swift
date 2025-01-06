@@ -53,7 +53,7 @@ extension NetworkManager {
                     
                     observer(.success(value))
                     self.cache.setData(data, forKey: url)
-
+                    
                 } catch let error {
                     observer(.failure(error))
                 }
@@ -63,7 +63,7 @@ extension NetworkManager {
         })
         return single
     }
-        
+    
     /// 지정된 URL 로 GET 요청을 수행하여 Data 타입의 데이터를 반환
     ///
     /// - Parameter url: 요청 URL
@@ -87,7 +87,7 @@ extension NetworkManager {
                     
                     observer(.success(image))
                     self.cache.setData(data, forKey: url)
-
+                    
                 } catch let error {
                     observer(.failure(error))
                 }
@@ -99,6 +99,9 @@ extension NetworkManager {
         return single
     }
     
+}
+
+extension NetworkManager {
     private func value<T: Decodable>(from data: Data) throws -> T {
         guard let value = try? JSONDecoder().decode(T.self, from: data) else {
             throw NetworkManagerError.invalidData

@@ -13,25 +13,44 @@ final class PokeCollectionViewCellViewModel {
     
     private let disposeBag = DisposeBag()
     
-    private let pokeID: Int
-    
+    private var requestDisposeBag = DisposeBag()
+        
     private let pokeAPIManager = PokemonAPIManager.shared
     
     private let pokeImagePublisher = BehaviorSubject<UIImage?>(value: nil)
     
-    var pokeImage: Observable<UIImage?> {
-        pokeImagePublisher.asObservable()
-    }
+    private func fetchImage(_ pokeID: Int) {
+        requestDisposeBag = DisposeBag()
         
-    init(pokeID: Int) {
-        self.pokeID = pokeID
-        fetchImage()
-    }
-    
-    private func fetchImage() {
         pokeAPIManager.fetchPokemonImage(of: pokeID)?
             .subscribe(onSuccess: { [weak self] image in
                 self?.pokeImagePublisher.onNext(image)
-            }).disposed(by: disposeBag)
+            }).disposed(by: requestDisposeBag)
     }
+}
+
+extension PokeCollectionViewCellViewModel {
+    
+    struct Input {
+        let pokeID: Observable<Int?>
+    }
+    
+    struct Output {
+        let pokeImage: Observable<UIImage?>
+    }
+    
+    func transForm(_ input: Input) -> Output {
+        
+        input.pokeID
+            .withUnretained(self)
+            .subscribe(onNext: { owner, pokeID in
+                guard let pokeID else { return }
+                owner.fetchImage(pokeID)
+            }).disposed(by: disposeBag)
+        
+        let pokeImage = pokeImagePublisher.asObservable()
+        
+        return Output(pokeImage: pokeImage)
+    }
+    
 }

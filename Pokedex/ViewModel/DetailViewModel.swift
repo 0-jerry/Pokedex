@@ -13,38 +13,16 @@ final class DetailViewModel {
     
     private let disposeBag = DisposeBag()
     
-    private let pokeAPIManager = PokemonAPIManager.shared
+    private let pokeAPIManager: PokemonAPIManager
     
-    private let pokeDetailsSubject = BehaviorSubject<PokeDetailsFormatter>(value: .default)
+    private let pokeDetailsSubject = BehaviorSubject<PokeDetailsFormatter?>(value: nil)
     
     private let pokeImageSubject = BehaviorSubject<UIImage?>(value: nil)
-    
-    private let pokeIDSubject: BehaviorSubject<Int>
-    
-    private var pokeID: Observable<Int> {
-        return pokeIDSubject.asObservable()
+
+    init() {
+        self.pokeAPIManager = PokemonAPIManager.shared
     }
     
-    var pokeDetails: Observable<PokeDetailsFormatter> {
-        return pokeDetailsSubject.asObservable()
-    }
-    
-    var pokeImage: Observable<UIImage?> {
-        return pokeImageSubject.asObservable()
-    }
-    
-    init(pokeID: Int) {
-        self.pokeIDSubject = BehaviorSubject<Int>(value: pokeID)
-        bind()
-    }
-    
-    // 개선 방향 찾아야함 -> ViewDidload 시점에 실행되게 하는 방법?
-    private func bind() {
-        pokeID.subscribe(onNext: { [weak self] pokeID in
-            self?.fetchPokeDetails(pokeID)
-            self?.fetchPokeImage(pokeID)
-        }).disposed(by: disposeBag)
-    }
     
     private func fetchPokeDetails(_ pokeID: Int) {
         pokeAPIManager
@@ -66,4 +44,31 @@ final class DetailViewModel {
                 }).disposed(by: disposeBag)
     }
     
+}
+
+extension DetailViewModel {
+    
+    struct Input {
+        let pokeID: Observable<Int?>
+    }
+    
+    struct Output {
+        let pokeDetailsFormatter: Observable<PokeDetailsFormatter?>
+        let pokeImage: Observable<UIImage?>
+    }
+    
+    func transform(_ input: Input) -> Output {
+        
+        let pokeDetailsFormatter = pokeDetailsSubject.asObservable()
+        let pokeImage = pokeImageSubject.asObservable()
+        let output = Output(pokeDetailsFormatter: pokeDetailsFormatter, pokeImage: pokeImage)
+        
+        input.pokeID.subscribe(onNext: { [weak self] pokeID in
+            guard let pokeID else { return }
+            self?.fetchPokeDetails(pokeID)
+            self?.fetchPokeImage(pokeID)
+        }).disposed(by: disposeBag)
+        
+        return output
+    }
 }

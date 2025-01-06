@@ -15,15 +15,16 @@ enum NetworkManagerError: Error, CustomStringConvertible {
             return "HTTP StatusCode Error - \(statusCode ?? 000)"
         case .decodeFailed:
             return "Decode Failed"
-        case .unknown:
-            return "Unknown Error"
         case .invalidData:
             return "Invalid Data"
+        case .unknown:
+            return "Unknown Error"
+
         }
     }
     
     case invalidResponse(statusCode: Int?)
     case decodeFailed
-    case unknown
     case invalidData
+    case unknown
 }
