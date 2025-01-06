@@ -10,16 +10,8 @@ import Foundation
 /// 포켓몬 타입
 ///
 struct PokemonType: Decodable {
-
+    
     private let type: NamedAPIResource?
     var english: String? { type?.name }
-
-}
-
-/// 
-struct NamedAPIResource: Decodable {
-    
-    let name: String
-    let url: String
     
 }

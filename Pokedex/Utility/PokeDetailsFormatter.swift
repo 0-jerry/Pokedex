@@ -29,4 +29,15 @@ struct PokeDetailsFormatter {
         self.height = "키: \(Double(height)/10) m"
         self.weight = "몸무게: \(Double(weight)/10) kg"
     }
+    
+    init(name: String,
+         type: String,
+         height: String,
+         weight: String) {
+        self.name = name
+        self.type = type
+        self.height = height
+        self.weight = weight
+    }
+    
 }

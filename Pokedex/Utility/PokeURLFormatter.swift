@@ -12,15 +12,15 @@ import Foundation
 struct PokeURLFormatter {
     
     /// Poke Image URL
-    static func image(of id: Int) -> URL? {
-        guard let pokeImageURL = URL(string: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/\(id).png") else { return nil }
+    static func image(of pokeID: PokeID) -> URL? {
+        guard let pokeImageURL = URL(string: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/\(pokeID).png") else { return nil }
         
         return pokeImageURL
     }
     
     /// Poke Detail URL
-    static func detail(of id: Int) -> URL? {
-        guard let pokeDetailURL = URL(string: "https://pokeapi.co/api/v2/pokemon/\(id)/") else { return nil }
+    static func detail(of pokeID: PokeID) -> URL? {
+        guard let pokeDetailURL = URL(string: "https://pokeapi.co/api/v2/pokemon/\(pokeID)/") else { return nil }
         
         return pokeDetailURL
     }

@@ -5,13 +5,13 @@
 //  Created by t2023-m0072 on 12/29/24.
 //
 
-import Foundation
+import UIKit
 
 import RxSwift
 
-/// Singleton 객체 
+/// Singleton 객체
 ///
-final class PokemonAPIManager: MainViewModel, DetailViewModel {
+final class PokemonAPIManager {
     
     static let shared = PokemonAPIManager()
     
@@ -24,14 +24,14 @@ final class PokemonAPIManager: MainViewModel, DetailViewModel {
         return networkManager.fetch(url: url)
     }
     
-    func fetchPokemonDetails(of id: Int) -> Single<PokemonDetails>? {
+    func fetchPokemonDetails(of id: PokeID) -> Single<PokemonDetails>? {
         guard let url = PokeURLFormatter.detail(of: id) else { return nil }
         return networkManager.fetch(url: url)
     }
     
-    func fetchPokemonImage(of id: Int) -> Single<Data>? {
+    func fetchPokemonImage(of id: PokeID) -> Single<UIImage>? {
         guard let url = PokeURLFormatter.image(of: id) else { return nil }
-        return networkManager.fetchData(url: url)
+        return networkManager.fetchImage(url: url)
     }
     
     func fetchNextPokemonList(_ pokemonList: PokemonList) -> Single<PokemonList>? {
@@ -40,6 +40,3 @@ final class PokemonAPIManager: MainViewModel, DetailViewModel {
     }
     
 }
-
-
-

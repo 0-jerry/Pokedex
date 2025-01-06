@@ -12,12 +12,13 @@ struct PokemonList: Decodable {
     
     let previous: String?
     let next: String?
-    let pokemons: [Pokemon]
+    let pokemons: [Pokemon]?
     
     enum CodingKeys: String, CodingKey {
         case pokemons = "results"
         case next
         case previous
     }
+    
 }
 

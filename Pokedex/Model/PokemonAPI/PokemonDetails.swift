@@ -10,7 +10,7 @@ import Foundation
 // ID, 이름, 키, 몸무게, 타입
 struct PokemonDetails: Decodable {
     
-    let id: Int?
+    let id: PokeID?
     let name: String?
     let height: Int?
     let weight: Int?

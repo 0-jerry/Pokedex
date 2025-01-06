@@ -10,11 +10,15 @@ import UIKit
 import RxSwift
 import SnapKit
 
-final class PokeCollectionViewCell: UICollectionViewCell {
-        
-    static let id = "PokeCollectionViewCell"
-
-    private(set) var disposeBag = DisposeBag()
+final class PokeCell: UICollectionViewCell {
+    
+    static let id = "PokeCell"
+    
+    private var disposeBag = DisposeBag()
+    
+    private let pokeIDSubject = BehaviorSubject<PokeID?>(value: nil)
+    
+    private let viewModel = PokeCellViewModel()
     
     private let pokeImageView: UIImageView = {
         let imageView = UIImageView()
@@ -27,14 +31,13 @@ final class PokeCollectionViewCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        pokeImageView.image = nil
-        disposeBag = DisposeBag()
+        reset()
     }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        backgroundColor = .cellBackground
         configureUI()
+        bind()
     }
     
     required init?(coder: NSCoder) {
@@ -43,10 +46,12 @@ final class PokeCollectionViewCell: UICollectionViewCell {
     
     private func reset() {
         pokeImageView.image = nil
-        disposeBag = DisposeBag()
     }
     
     private func configureUI() {
+        
+        backgroundColor = .cellBackground
+        
         addSubview(pokeImageView)
         
         pokeImageView.snp.makeConstraints {
@@ -56,21 +61,23 @@ final class PokeCollectionViewCell: UICollectionViewCell {
         self.layer.cornerRadius = 10
         self.clipsToBounds = true
     }
-        
-}
-
-// MARK: - PokeView
-
-extension PokeCollectionViewCell {
     
-    func updateImage(by data: Data) {
-        guard let image = UIImage(data: data) else { return }
-        
-        DispatchQueue.main.async { [weak self] in
-            self?.pokeImageView.image = image
-        }
+    func configurePokeID(_ pokeID: PokeID) {
+        self.pokeIDSubject.onNext(pokeID)
     }
 }
 
-///prepareForReuse 문제가 아닌 비동기 문제?
-///subscribe 에 의해 응답에 따라 변경되기에 연속적으로 이미지가 바뀌며 시각적으로 드러남
+extension PokeCell {
+    
+    private func bind() {
+        let pokeID = pokeIDSubject.asObservable()
+        let input = PokeCellViewModel.Input(pokeID: pokeID)
+        let output = viewModel.transForm(input)
+        
+        output.pokeImage
+            .observe(on: MainScheduler.instance)
+            .bind(to: pokeImageView.rx.image)
+            .disposed(by: disposeBag)
+    }
+    
+}
